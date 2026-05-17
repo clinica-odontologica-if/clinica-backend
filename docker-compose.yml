@@ -14,38 +14,6 @@ services:
     networks:
       - clinica-net
 
-  auth-service:
-    build:
-      context: ./servico-autenticacao
-      dockerfile: Dockerfile
-    container_name: auth-service
-    depends_on:
-      - mysql
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/clinica?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-    ports:
-      - "8081:8081"
-    networks:
-      - clinica-net
-
-  paciente-service:
-    build:
-      context: ./servico-paciente
-      dockerfile: Dockerfile
-    container_name: paciente-service
-    depends_on:
-      - mysql
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/clinica?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-    ports:
-      - "8082:8082"
-    networks:
-      - clinica-net
-
 volumes:
   mysql_data:
 

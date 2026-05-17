@@ -1,88 +1,39 @@
-# Clinica Docker - Sprint 1
+# Clinica Docker
 
-Sistema distribuido para gerenciamento de clinicas odontologicas, baseado em microservicos com Java, Spring Boot, Docker e MySQL.
+Repositorio preparado apenas com a configuracao de ambiente da sprint.
 
-## Objetivo da Sprint 1
+## Escopo Atual
 
-- Configurar ambiente com Docker Compose
-- Implementar dois microservicos iniciais:
-  - `servico-autenticacao`
-  - `servico-paciente`
-- Garantir funcionamento basico via API REST
-- Disponibilizar telas simples de cadastro/login no servico de autenticacao
+- Banco MySQL em Docker Compose
+- Documentacao da sprint em `docs/sprint 0`
+- Sem implementacao de microservicos neste repositorio
 
----
+## Aderencia ao Documento
 
-## Tecnologias Utilizadas
+O documento descreve uma arquitetura orientada a microsservicos para a clinica odontologica. Neste estado do projeto foi mantida somente a base de ambiente, sem codigo de servicos, para evitar implementacoes parciais fora do escopo desejado.
 
-- Java 17
-- Spring Boot 3
-- Spring Web
-- Spring Data JPA
-- Spring Validation
-- Thymeleaf (telas no servico de autenticacao)
+## Tecnologias Mantidas
+
 - MySQL 8
 - Docker
 - Docker Compose
-- Maven
 
----
+## Ambiente
 
-## Arquitetura da Solucao
+O arquivo `docker-compose.yml` sobe apenas a infraestrutura de banco de dados:
 
-A aplicacao esta dividida em 3 containers:
+1. `mysql`
+   - Banco relacional da aplicacao
+   - Porta externa `3306`
+   - Volume persistente `mysql_data`
+   - Rede `clinica-net`
 
-1. **mysql**
-   - Banco de dados relacional da sprint
-   - Porta externa: `3306`
-
-2. **auth-service**
-   - Cadastro e login de usuarios
-   - API REST + telas web
-   - Porta externa: `8081`
-
-3. **paciente-service**
-   - CRUD de pacientes via API REST
-   - Porta externa: `8082`
-
-Comunicacao com banco:
-- Os microservicos se conectam ao MySQL pelo hostname Docker `mysql`.
-- Configuracao JPA com `spring.jpa.hibernate.ddl-auto=update`.
-
----
-
-## Estrutura de Pastas
+## Estrutura
 
 ```text
-clinica-docker/
-├── docker-compose.yml
-├── servico-autenticacao/
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/
-│       ├── java/com/clinica/autenticacao/
-│       │   ├── ServicoAutenticacaoApplication.java
-│       │   ├── controller/
-│       │   │   ├── AuthController.java
-│       │   │   └── AuthPageController.java
-│       │   ├── dto/
-│       │   │   ├── CadastroUsuarioRequest.java
-│       │   │   └── LoginRequest.java
-│       │   ├── model/Usuario.java
-│       │   └── repository/UsuarioRepository.java
-│       └── resources/
-│           ├── application.properties
-│           └── templates/
-│               ├── auth-register.html
-│               ├── auth-login.html
-│               └── auth-home.html
-└── servico-paciente/
-    ├── Dockerfile
-    ├── pom.xml
-    └── src/main/
-        ├── java/com/clinica/paciente/
-        │   ├── ServicoPacienteApplication.java
-        │   ├── controller/PacienteController.java
-        │   ├── model/Paciente.java
-        │   └── repository/PacienteRepository.java
-        └── resources/application.properties
+Clinica-Odontologica/
+|-- docker-compose.yml
+|-- README.md
+`-- docs/
+    `-- sprint 0/
+```
