@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
             usuarioRepository.save(new Usuario(null, "Atendente", "atendente@clinica.com", passwordEncoder.encode("123456"), Role.ATENDENTE));
             usuarioRepository.save(new Usuario(null, "Dentista", "dentista@clinica.com", passwordEncoder.encode("123456"), Role.DENTISTA));
             usuarioRepository.save(new Usuario(null, "Auxiliar", "auxiliar@clinica.com", passwordEncoder.encode("123456"), Role.AUXILIAR));
-            System.out.println("Usuários de teste criados!");
+            System.out.println("Usuarios de teste criados!");
         }
     }
 }

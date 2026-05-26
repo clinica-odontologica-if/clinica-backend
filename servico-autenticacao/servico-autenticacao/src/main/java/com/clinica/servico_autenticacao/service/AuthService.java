@@ -17,7 +17,7 @@ public class AuthService {
     public Usuario autenticar(String email, String senha) {
         Optional<Usuario> usuario = usuarioRepository.findByEmail(email);
         if (usuario.isEmpty()) {
-            throw new RuntimeException("Usuario não encontrado");
+            throw new RuntimeException("Usuario nao encontrado");
 
         }
         if (!passwordEncoder.matches(senha, usuario.get().getSenha())) {
