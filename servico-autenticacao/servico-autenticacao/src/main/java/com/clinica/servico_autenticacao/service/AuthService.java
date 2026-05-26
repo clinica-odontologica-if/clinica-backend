@@ -11,8 +11,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private UsuarioRepository usuarioRepository;
-    private PasswordEncoder passwordEncoder;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public Usuario autenticar(String email, String senha) {
         Optional<Usuario> usuario = usuarioRepository.findByEmail(email);
