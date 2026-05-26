@@ -25,6 +25,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"erro\": \"Token ausente ou invalido\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/health", "/error").permitAll()
                         .anyRequest().authenticated()
