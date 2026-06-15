@@ -1,0 +1,19 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/clinica-odontologica-if/clinica-configs.git
+          username: ${GIT_USERNAME}
+          password: ${GIT_TOKEN}
+          default-label: main
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

@@ -11,14 +11,38 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - clinica-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  config-server:
+    build: ./config-server
+    container_name: config-server
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/clinica-odontologica-if/clinica-configs.git
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${GIT_USERNAME}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${GIT_TOKEN}
+    ports:
+      - "8888:8888"
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+
 
   servico-autenticacao:
     build: ./servico-autenticacao
     container_name: clinica-auth
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/clinica_auth
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       ADMIN_SENHA_GERENTE: ${ADMIN_SENHA_GERENTE}
       ADMIN_SENHA_ATENDENTE: ${ADMIN_SENHA_ATENDENTE}
       ADMIN_SENHA_DENTISTA: ${ADMIN_SENHA_DENTISTA}
@@ -26,7 +50,10 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     networks:
       - clinica-net
 

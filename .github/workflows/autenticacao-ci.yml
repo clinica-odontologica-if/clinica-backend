@@ -1,0 +1,35 @@
+name: CI - Serviço de Autenticação
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'servico-autenticacao/servico-autenticacao/**'
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'servico-autenticacao/servico-autenticacao/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+
+    defaults:
+      run:
+        working-directory: ./servico-autenticacao/servico-autenticacao
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Executar Testes do Serviço de Autenticação
+        run: mvn clean test
