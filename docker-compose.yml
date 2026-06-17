@@ -36,6 +36,20 @@ services:
       retries: 10
       start_period: 30s
 
+  discovery-server:
+    build: ./discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 
 
   servico-autenticacao:
@@ -43,6 +57,7 @@ services:
     container_name: clinica-auth
     environment:
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
       ADMIN_SENHA_GERENTE: ${ADMIN_SENHA_GERENTE}
       ADMIN_SENHA_ATENDENTE: ${ADMIN_SENHA_ATENDENTE}
       ADMIN_SENHA_DENTISTA: ${ADMIN_SENHA_DENTISTA}
@@ -54,8 +69,11 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     networks:
       - clinica-net
+
 
   frontend-autenticacao:
     build: ./frontend-autenticacao
