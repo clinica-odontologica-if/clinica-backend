@@ -12,5 +12,6 @@
     <modules>
         <module>servico-autenticacao/servico-autenticacao</module>
         <module>config-server/config-server</module>
+        <module>discovery-server/discovery-server</module>
     </modules>
 </project>
