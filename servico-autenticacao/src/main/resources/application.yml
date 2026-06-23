@@ -1,6 +1,8 @@
 spring:
   application:
     name: servico-autenticacao
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   config:
     import: >
@@ -37,6 +39,10 @@ eureka:
 logging:
   level:
     org.springframework.security: DEBUG
+app:
+  data-init:
+    enabled: false
+
 
 admin:
   senha:
