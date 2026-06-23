@@ -29,21 +29,30 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(401);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"erro\": \"Token ausente ou invalido\"}");
+                            response.getWriter().write(
+                                    "{\"status\":401,\"erro\":\"Token ausente ou inválido\"," +
+                                            "\"mensagem\":\"Informe um token JWT válido no cabeçalho Authorization\"," +
+                                            "\"caminho\":\"" + request.getRequestURI() + "\"}"
+                            );
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login",
+                        .requestMatchers(
+                                "/auth/login",
                                 "/auth/health",
+                                "/auth/setup",       // ← rota pública de setup inicial
                                 "/api/auth/login",
                                 "/api/auth/health",
-                                "/error").permitAll()
+                                "/api/auth/setup",   // ← também pelo proxy do nginx
+                                "/error"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
