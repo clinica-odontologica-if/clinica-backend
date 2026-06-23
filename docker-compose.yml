@@ -56,13 +56,11 @@ services:
     build: ./servico-autenticacao
     container_name: clinica-auth
     environment:
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
-      ADMIN_SENHA_GERENTE: ${ADMIN_SENHA_GERENTE}
-      ADMIN_SENHA_ATENDENTE: ${ADMIN_SENHA_ATENDENTE}
-      ADMIN_SENHA_DENTISTA: ${ADMIN_SENHA_DENTISTA}
-      ADMIN_SENHA_AUXILIAR: ${ADMIN_SENHA_AUXILIAR}
       SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://clinica-mysql:3306/clinica_auth
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
 
     ports:
       - "8081:8081"

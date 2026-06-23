@@ -6,7 +6,10 @@ import com.clinica.servico_autenticacao.model.Usuario;
 import com.clinica.servico_autenticacao.security.JwtUtil;
 import com.clinica.servico_autenticacao.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -57,6 +60,14 @@ public class AuthController {
                     "mensagem", e.getMessage()
             ));
         }
+    }
+    // Método auxiliar TEMPORÁRIO — use só para gerar hashes, depois remova
+    @GetMapping("/hash")
+    @Profile("dev")
+    public ResponseEntity<Map<String, String>> gerarHash(
+            @RequestParam String senha,
+            @Autowired PasswordEncoder encoder) {
+        return ResponseEntity.ok(Map.of("hash", encoder.encode(senha)));
     }
 
     @GetMapping("/health")
