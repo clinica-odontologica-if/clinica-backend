@@ -57,6 +57,21 @@ services:
     networks:
       - clinica-net
 
+  servico-paciente:
+    build: ./servico-paciente
+    container_name: clinica-paciente
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - clinica-net
+
   frontend-autenticacao:
     build: ./frontend-autenticacao
     container_name: clinica-auth-frontend
