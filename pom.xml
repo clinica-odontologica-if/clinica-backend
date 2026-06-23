@@ -11,7 +11,7 @@
 
     <modules>
         <module>servico-autenticacao</module>
-        <module>servico-profissional/servico-profissional</module>
+        <module>servico-profissional</module>
         <module>config-server</module>
         <module>discovery-server</module>
     </modules>
