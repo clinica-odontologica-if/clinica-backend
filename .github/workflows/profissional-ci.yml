@@ -5,11 +5,11 @@ on:
     branches:
       - '**'
     paths:
-      - 'servico-profissional/servico-profissional/**'
+      - 'servico-profissional/**'
   pull_request:
     branches: [ "main", "develop" ]
     paths:
-      - 'servico-profissional/servico-profissional/**'
+      - 'servico-profissional/**'
 
 jobs:
   test:
@@ -17,7 +17,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./servico-profissional/servico-profissional
+        working-directory: ./servico-profissional
 
     steps:
       - name: Checkout do código
