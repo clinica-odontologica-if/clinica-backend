@@ -1,13 +1,11 @@
 package com.clinica.servico_profissional.controller;
 
+import com.clinica.servico_profissional.dto.ProfissionalRequest;
 import com.clinica.servico_profissional.dto.ProfissionalResponse;
 import com.clinica.servico_profissional.service.ProfissionalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +25,24 @@ public class ProfissionalController {
     @GetMapping("/{id}")
     public ResponseEntity<ProfissionalResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(profissionalService.buscarPorId(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<ProfissionalResponse> cadastrar(@RequestBody ProfissionalRequest dto) {
+        ProfissionalResponse response = profissionalService.cadastrar(dto);
+        return ResponseEntity.status(201).body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProfissionalResponse> atualizar(@PathVariable Long id,
+                                                           @RequestBody ProfissionalRequest dto) {
+        return ResponseEntity.ok(profissionalService.atualizar(id, dto));
+    }
+
+    @PatchMapping("/{id}/inativar")
+    public ResponseEntity<Void> inativar(@PathVariable Long id) {
+        profissionalService.inativar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/health")

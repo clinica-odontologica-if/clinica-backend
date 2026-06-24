@@ -8,4 +8,6 @@ import java.util.List;
 public interface ProfissionalRepository extends JpaRepository<Profissional, Long> {
 
     List<Profissional> findByAtivoTrue();
+
+    boolean existsByEmail(String email);
 }

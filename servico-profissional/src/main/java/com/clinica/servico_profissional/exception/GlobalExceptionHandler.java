@@ -17,6 +17,14 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(RegraDeNegocioException.class)
+    public ResponseEntity<ErroResponse> handleRegraDeNegocio(
+            RegraDeNegocioException ex, HttpServletRequest request) {
+        return ResponseEntity.status(400).body(
+                new ErroResponse(400, "Dados inválidos", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErroResponse> handleErroGenerico(
             Exception ex, HttpServletRequest request) {
