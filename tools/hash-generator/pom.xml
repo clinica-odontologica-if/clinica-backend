@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Herda do Spring Boot diretamente, igual aos outros módulos do projeto -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.clinica</groupId>
+    <artifactId>hash-generator</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>hash-generator</name>
+    <description>
+        Ferramenta utilitária para geração e verificação de hashes BCrypt.
+        Uso exclusivo do time de desenvolvimento — não vai a produção.
+    </description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+        <!-- BCrypt — mesma implementação usada pelos serviços -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <!-- versão gerenciada pelo spring-boot-starter-parent -->
+        </dependency>
+
+        <!-- Necessário para spring-security-crypto sem contexto Spring -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <!-- versão gerenciada pelo spring-boot-starter-parent -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Roda a classe main via: mvn exec:java -pl tools/hash-generator -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.clinica.tools.HashGenerator</mainClass>
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                </configuration>
+            </plugin>
+
+            <!-- Impede que o Spring Boot tente empacotar este módulo -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
