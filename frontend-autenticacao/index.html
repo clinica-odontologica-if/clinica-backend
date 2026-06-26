@@ -1,51 +1,134 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clinica Odontologica | Login</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="page-shell">
-      <section class="brand-panel" aria-label="Clinica Odontologica">
-        <div class="brand-mark" aria-hidden="true">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinica Odontologica</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<main id="tela-login" class="login-shell">
+  <section class="login-brand" aria-label="Clinica Odontologica">
+    <div class="brand-mark" aria-hidden="true">
+      <span></span>
+    </div>
+
+    <div>
+      <p class="eyebrow">Clinica Odontologica</p>
+      <h1>Acesso ao sistema</h1>
+      <p class="support-text">Entre com um usuario cadastrado para acessar os servicos da clinica.</p>
+    </div>
+  </section>
+
+  <section class="login-area" aria-label="Formulario de login">
+    <form id="loginForm" class="login-form">
+      <div class="form-header">
+        <div>
+          <p class="eyebrow">Autenticacao</p>
+          <h2>Login</h2>
+        </div>
+        <span id="apiStatus" class="status-pill">verificando</span>
+      </div>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" value="gerente@clinica.com" required />
+
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="current-password" value="123456" required />
+
+      <button id="submitButton" type="submit">Entrar</button>
+      <p id="message" class="message" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<main id="tela-dashboard" class="dashboard-shell" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        <div class="sidebar-mark" aria-hidden="true">
           <span></span>
         </div>
         <div>
-          <p class="eyebrow">Clinica Odontologica</p>
-          <h1>Acesso ao sistema</h1>
-          <p class="support-text">Entre com um usuario cadastrado para acessar os servicos da clinica.</p>
+          <strong>Clinica</strong>
+          <small>Odontologica</small>
         </div>
-      </section>
+      </div>
 
-      <section class="login-panel" aria-label="Formulario de login">
-        <form id="loginForm" class="login-form">
-          <div class="form-header">
-            <h2>Login</h2>
-            <span id="apiStatus" class="status-pill">verificando</span>
-          </div>
+      <nav class="sidebar-nav" aria-label="Menu principal">
+        <button type="button" class="nav-item active" data-page="inicio">Inicio</button>
+        <button type="button" class="nav-item" data-page="consultas">Consultas</button>
+        <button type="button" class="nav-item" data-page="pacientes">Pacientes</button>
+        <button type="button" class="nav-item" data-page="configuracoes">Configuracoes</button>
+      </nav>
+    </div>
 
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" autocomplete="username" value="gerente@clinica.com" required />
+    <div class="user-card">
+      <div class="avatar" id="userInitials">U</div>
+      <div class="user-info">
+        <strong id="userName">Usuario</strong>
+        <span id="userRole">Perfil</span>
+      </div>
+      <button id="logoutButton" type="button" class="logout-button">Sair</button>
+    </div>
+  </aside>
 
-          <label for="senha">Senha</label>
-          <input id="senha" name="senha" type="password" autocomplete="current-password" value="123456" required />
+  <section class="main-panel">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Painel</p>
+        <h2 id="pageTitle">Inicio</h2>
+      </div>
+      <span id="dashboardStatus" class="status-pill ok">online</span>
+    </header>
 
-          <button id="submitButton" type="submit">Entrar</button>
-          <p id="message" class="message" role="status"></p>
-        </form>
+    <section id="conteudo" class="content-area" aria-live="polite"></section>
+  </section>
+</main>
 
-        <div id="sessionBox" class="session-box" hidden>
-          <div>
-            <span class="session-label">Token JWT</span>
-            <p id="tokenPreview"></p>
-          </div>
-          <button id="logoutButton" type="button" class="secondary-button">Sair</button>
-        </div>
-      </section>
-    </main>
+<template id="pagina-inicio">
+  <div class="page-grid">
+    <article class="metric-card">
+      <span>Consultas hoje</span>
+      <strong>0</strong>
+    </article>
+    <article class="metric-card">
+      <span>Pacientes ativos</span>
+      <strong>0</strong>
+    </article>
+    <article class="metric-card">
+      <span>Status</span>
+      <strong>Operando</strong>
+    </article>
+  </div>
 
-    <script src="./app.js"></script>
-  </body>
+  <article class="panel">
+    <h3>Bem-vindo</h3>
+    <p>Esta area esta pronta para receber as paginas futuras do sistema.</p>
+  </article>
+</template>
+
+<template id="pagina-consultas">
+  <article class="panel">
+    <h3>Consultas</h3>
+    <p>Espaco reservado para listagem, criacao e acompanhamento de consultas.</p>
+  </article>
+</template>
+
+<template id="pagina-pacientes">
+  <article class="panel">
+    <h3>Pacientes</h3>
+    <p>Espaco reservado para cadastro e gerenciamento de pacientes.</p>
+  </article>
+</template>
+
+<template id="pagina-configuracoes">
+  <article class="panel">
+    <h3>Configuracoes</h3>
+    <p>Espaco reservado para preferencias e configuracoes administrativas.</p>
+  </article>
+</template>
+
+<script src="./app.js"></script>
+</body>
 </html>
