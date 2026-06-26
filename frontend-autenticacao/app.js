@@ -17,6 +17,7 @@ const navItems = document.querySelectorAll(".nav-item");
 
 const pageTitles = {
   inicio: "Inicio",
+  profissionais: "Profissionais",
   consultas: "Consultas",
   pacientes: "Pacientes",
   configuracoes: "Configuracoes",
@@ -68,6 +69,48 @@ const getInitials = (name) => {
       .toUpperCase();
 };
 
+const getToken = () => localStorage.getItem(TOKEN_KEY);
+
+const getAuthHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
+const setPageMessage = (selector, text, type = "") => {
+  const element = document.querySelector(selector);
+  if (!element) return;
+  element.textContent = text;
+  element.className = `message ${type}`.trim();
+};
+
+const parseResponse = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { mensagem: text };
+  }
+};
+
+const getErrorMessage = (data, fallback) => {
+  if (!data) return fallback;
+  return data.mensagem || data.erro || data.message || fallback;
+};
+
+const escapeHtml = (value) => {
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return String(value ?? "-").replace(/[&<>"']/g, (char) => map[char]);
+};
+
 const showLogin = () => {
   loginScreen.hidden = false;
   dashboardScreen.hidden = true;
@@ -117,6 +160,10 @@ const renderPage = (page) => {
   navItems.forEach((item) => {
     item.classList.toggle("active", item.dataset.page === page);
   });
+
+  if (page === "profissionais") {
+    initProfissionaisPage();
+  }
 };
 
 const checkApi = async () => {
@@ -134,6 +181,134 @@ const checkApi = async () => {
     dashboardStatus.textContent = "offline";
     dashboardStatus.className = "status-pill offline";
   }
+};
+
+const renderProfissionais = (profissionais) => {
+  const tbody = document.querySelector("#profissionaisTabela");
+  if (!tbody) return;
+
+  if (!profissionais.length) {
+    tbody.innerHTML = '<tr><td colspan="4">Nenhum profissional cadastrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = profissionais
+      .map((profissional) => {
+        const detalhes = profissional.role === "DENTISTA"
+            ? `${profissional.cro || "-"} / ${profissional.especialidade || "-"}`
+            : "-";
+
+        return `
+          <tr>
+            <td>${escapeHtml(profissional.nome)}</td>
+            <td>${escapeHtml(profissional.email)}</td>
+            <td>${escapeHtml(profissional.role)}</td>
+            <td>${escapeHtml(detalhes)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+};
+
+const carregarProfissionais = async () => {
+  const status = document.querySelector("#profissionaisStatus");
+  const tbody = document.querySelector("#profissionaisTabela");
+  if (!status || !tbody) return;
+
+  status.textContent = "carregando";
+  status.className = "status-pill";
+  tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+  try {
+    const response = await fetch("/api/profissionais", {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await parseResponse(response);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, "Nao foi possivel carregar profissionais."));
+    }
+
+    renderProfissionais(Array.isArray(data) ? data : []);
+    status.textContent = "online";
+    status.className = "status-pill ok";
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`;
+    status.textContent = "erro";
+    status.className = "status-pill offline";
+  }
+};
+
+const toggleCamposDentista = () => {
+  const role = document.querySelector("#profissionalRole");
+  const campos = document.querySelector("#camposDentista");
+  const cro = document.querySelector("#profissionalCro");
+  const especialidade = document.querySelector("#profissionalEspecialidade");
+  if (!role || !campos || !cro || !especialidade) return;
+
+  const isDentista = role.value === "DENTISTA";
+  campos.hidden = !isDentista;
+  cro.required = isDentista;
+  especialidade.required = isDentista;
+};
+
+const cadastrarProfissional = async (event) => {
+  event.preventDefault();
+
+  const formProfissional = event.currentTarget;
+  const button = document.querySelector("#salvarProfissionalButton");
+  const formData = new FormData(formProfissional);
+  const payload = {
+    nome: formData.get("nome"),
+    email: formData.get("email"),
+    role: formData.get("role"),
+  };
+
+  if (payload.role === "DENTISTA") {
+    payload.cro = formData.get("cro");
+    payload.especialidade = formData.get("especialidade");
+  }
+
+  button.disabled = true;
+  setPageMessage("#profissionalMessage", "Salvando...");
+
+  try {
+    const response = await fetch("/api/profissionais", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await parseResponse(response);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, "Nao foi possivel cadastrar o profissional."));
+    }
+
+    formProfissional.reset();
+    toggleCamposDentista();
+    setPageMessage("#profissionalMessage", "Profissional cadastrado com sucesso.", "success");
+    await carregarProfissionais();
+  } catch (error) {
+    setPageMessage("#profissionalMessage", error.message, "error");
+  } finally {
+    button.disabled = false;
+  }
+};
+
+const initProfissionaisPage = () => {
+  const formProfissional = document.querySelector("#profissionalForm");
+  const role = document.querySelector("#profissionalRole");
+  const reloadButton = document.querySelector("#recarregarProfissionaisButton");
+
+  if (!formProfissional || formProfissional.dataset.ready === "true") return;
+
+  formProfissional.dataset.ready = "true";
+  role.addEventListener("change", toggleCamposDentista);
+  formProfissional.addEventListener("submit", cadastrarProfissional);
+  reloadButton.addEventListener("click", carregarProfissionais);
+
+  toggleCamposDentista();
+  carregarProfissionais();
 };
 
 form.addEventListener("submit", async (event) => {
