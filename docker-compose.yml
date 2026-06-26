@@ -37,6 +37,25 @@ services:
       retries: 10
       start_period: 30s
 
+  mysql-paciente:
+    image: mysql:8.0
+    container_name: clinica-mysql-paciente
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_paciente
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_paciente_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   config-server:
     build: ./config-server
     container_name: config-server
@@ -118,6 +137,27 @@ services:
     networks:
       - clinica-net
 
+  servico-paciente:
+    build: ./servico-paciente
+    container_name: clinica-paciente
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_PACIENTE_URL: jdbc:mysql://clinica-mysql-paciente:3306/clinica_paciente
+      SPRING_DATASOURCE_PACIENTE_USERNAME: root
+      SPRING_DATASOURCE_PACIENTE_PASSWORD: root
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql-paciente:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - clinica-net
+
   frontend-autenticacao:
     build: ./frontend-autenticacao
     container_name: clinica-auth-frontend
@@ -126,12 +166,14 @@ services:
     depends_on:
       - servico-autenticacao
       - servico-profissional
+      - servico-paciente
     networks:
       - clinica-net
 
 volumes:
   mysql_data:
   mysql_profissional_data:
+  mysql_paciente_data:
 
 networks:
   clinica-net:
