@@ -28,8 +28,8 @@ class AuthControllerTest extends MySQLContainerBase {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Hash BCrypt da migration V2 corresponde à senha "password"
-    private static final String SENHA_PADRAO = "password";
+    // Hash BCrypt corrigido pela migration V3.
+    private static final String SENHA_PADRAO = "Gerente@2025";
 
     @Test
     @DisplayName("POST /auth/login deve retornar 200 e token JWT com credenciais corretas")

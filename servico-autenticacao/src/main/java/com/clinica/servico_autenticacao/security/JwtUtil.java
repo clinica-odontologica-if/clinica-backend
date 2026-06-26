@@ -55,6 +55,7 @@ public class JwtUtil {
                 .claim("type", TYPE_USER)
                 .claim("role", usuario.getRole().name())
                 .claim("id",   usuario.getId())
+                .claim("nome", usuario.getNome())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiracaoMs))
                 .signWith(chave, SignatureAlgorithm.HS256)
