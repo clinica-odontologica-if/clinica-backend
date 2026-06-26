@@ -1,6 +1,7 @@
 package com.clinica.servico_autenticacao.service;
 
 import com.clinica.servico_autenticacao.dto.SetupRequest;
+import com.clinica.servico_autenticacao.dto.UsuarioInternoRequest;
 import com.clinica.servico_autenticacao.dto.UsuarioResponse;
 import com.clinica.servico_autenticacao.model.Role;
 import com.clinica.servico_autenticacao.model.Usuario;
@@ -70,6 +71,45 @@ public class AuthService {
         log.info("Primeiro gerente criado com sucesso: {}", salvo.getEmail());
 
         return new UsuarioResponse(salvo.getId(), salvo.getNome(), salvo.getEmail(), salvo.getRole());
+    }
+
+    public UsuarioResponse criarUsuarioInterno(UsuarioInternoRequest request) {
+        validarUsuarioInterno(request);
+
+        if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Ja existe um usuario com este email.");
+        }
+
+        Usuario usuario = new Usuario(
+                null,
+                request.getNome().trim(),
+                request.getEmail().trim(),
+                passwordEncoder.encode(request.getSenha()),
+                request.getRole()
+        );
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        log.info("Usuario interno criado com sucesso: {}", salvo.getEmail());
+
+        return new UsuarioResponse(salvo.getId(), salvo.getNome(), salvo.getEmail(), salvo.getRole());
+    }
+
+    private void validarUsuarioInterno(UsuarioInternoRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Dados do usuario sao obrigatorios.");
+        }
+        if (request.getNome() == null || request.getNome().isBlank()) {
+            throw new IllegalArgumentException("O campo nome e obrigatorio.");
+        }
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("O campo email e obrigatorio.");
+        }
+        if (request.getSenha() == null || request.getSenha().isBlank()) {
+            throw new IllegalArgumentException("O campo senha e obrigatorio.");
+        }
+        if (request.getRole() == null) {
+            throw new IllegalArgumentException("O campo role e obrigatorio.");
+        }
     }
 
     // Exceção interna para representar o estado "setup já feito"

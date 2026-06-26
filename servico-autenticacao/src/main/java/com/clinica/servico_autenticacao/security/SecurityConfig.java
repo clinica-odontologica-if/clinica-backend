@@ -38,6 +38,10 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/auth/usuarios/interno",
+                                "/api/auth/usuarios/interno"
+                        ).hasRole("SERVICE")
+                        .requestMatchers(
                                 "/auth/login",
                                 "/auth/health",
                                 "/auth/setup",       // ← rota pública de setup inicial

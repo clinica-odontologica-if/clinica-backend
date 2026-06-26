@@ -30,7 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            if (jwtUtil.validarToken(token)) {
+            if (jwtUtil.validarToken(token) && jwtUtil.isTokenDeUsuario(token)) {
                 String email = jwtUtil.extrairEmail(token);
                 String role = jwtUtil.extrairRole(token);
 
