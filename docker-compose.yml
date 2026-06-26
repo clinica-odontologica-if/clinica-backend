@@ -166,6 +166,7 @@ services:
     depends_on:
       - servico-autenticacao
       - servico-profissional
+      - servico-paciente
     networks:
       - clinica-net
 

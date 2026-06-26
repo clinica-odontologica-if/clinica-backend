@@ -186,10 +186,77 @@
 </template>
 
 <template id="pagina-pacientes">
-  <article class="panel">
-    <h3>Pacientes</h3>
-    <p>Espaco reservado para cadastro e gerenciamento de pacientes.</p>
-  </article>
+  <section class="workspace-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cadastro</p>
+          <h3 id="pacienteFormTitulo">Cadastrar paciente</h3>
+        </div>
+        <span id="pacientesStatus" class="status-pill">aguardando</span>
+      </div>
+
+      <form id="pacienteForm" class="data-form">
+        <input id="pacienteId" name="id" type="hidden" />
+
+        <label for="pacienteNome">Nome</label>
+        <input id="pacienteNome" name="nome" type="text" autocomplete="name" required />
+
+        <label for="pacienteCpf">CPF</label>
+        <input id="pacienteCpf" name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" required />
+
+        <label for="pacienteDataNascimento">Data de nascimento</label>
+        <input id="pacienteDataNascimento" name="dataNascimento" type="date" required />
+
+        <label for="pacienteTelefone">Telefone</label>
+        <input id="pacienteTelefone" name="telefone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" required />
+
+        <label for="pacienteEmail">Email</label>
+        <input id="pacienteEmail" name="email" type="email" autocomplete="email" />
+
+        <label for="pacienteEndereco">Endereco</label>
+        <input id="pacienteEndereco" name="endereco" type="text" autocomplete="street-address" />
+
+        <label for="pacienteObservacoes">Observacoes</label>
+        <textarea id="pacienteObservacoes" name="observacoes" rows="4"></textarea>
+
+        <div class="form-actions">
+          <button id="salvarPacienteButton" type="submit" class="primary-button">Salvar</button>
+          <button id="cancelarEdicaoPacienteButton" type="button" class="secondary-button" hidden>Cancelar</button>
+        </div>
+        <p id="pacienteMessage" class="message" role="status"></p>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cadastros</p>
+          <h3>Pacientes ativos</h3>
+        </div>
+        <button id="recarregarPacientesButton" type="button" class="secondary-button">Atualizar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Acoes</th>
+          </tr>
+          </thead>
+          <tbody id="pacientesTabela">
+          <tr>
+            <td colspan="5">Carregando...</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
 </template>
 
 <template id="pagina-configuracoes">

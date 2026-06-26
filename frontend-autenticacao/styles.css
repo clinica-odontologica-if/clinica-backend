@@ -29,7 +29,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -173,9 +174,9 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
-  height: 46px;
   margin-bottom: 18px;
   padding: 0 12px;
   border: 1px solid #c9d6e3;
@@ -184,8 +185,20 @@ select {
   background: #ffffff;
 }
 
+input,
+select {
+  height: 46px;
+}
+
+textarea {
+  min-height: 110px;
+  padding-top: 10px;
+  resize: vertical;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 3px solid rgba(29, 111, 216, 0.18);
   border-color: var(--primary);
 }
@@ -455,8 +468,16 @@ select:focus {
   display: grid;
 }
 
+.form-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .primary-button,
-.secondary-button {
+.secondary-button,
+.danger-button,
+.table-action {
   min-height: 42px;
   border: 0;
   border-radius: 6px;
@@ -485,6 +506,42 @@ select:focus {
 
 .secondary-button:hover {
   background: #dbeafe;
+}
+
+.danger-button {
+  padding: 0 12px;
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.danger-button:hover {
+  background: #fecaca;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.table-action {
+  min-height: 34px;
+  padding: 0 10px;
+  background: #eef4fb;
+  color: var(--navy);
+}
+
+.table-action:hover {
+  background: #dbeafe;
+}
+
+.table-action.danger {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.table-action.danger:hover {
+  background: #fecaca;
 }
 
 .table-wrap {
