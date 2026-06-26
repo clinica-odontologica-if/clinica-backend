@@ -16,7 +16,7 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
+        jwtUtil = new JwtUtil("desenvolvimento-local-chave-minima-32-chars", 28800000L);
 
         usuarioDentista = new Usuario(
                 2L,
@@ -54,6 +54,15 @@ class JwtUtilTest {
         String roleExtraida = jwtUtil.extrairRole(token);
 
         assertThat(roleExtraida).isEqualTo("DENTISTA");
+    }
+
+    @Test
+    @DisplayName("deve gerar token de servico com type e nome do servico")
+    void deveGerarTokenDeServico() {
+        String token = jwtUtil.gerarTokenServico("servico-profissional");
+
+        assertThat(jwtUtil.extrairType(token)).isEqualTo("service");
+        assertThat(jwtUtil.extrairNomeServico(token)).isEqualTo("servico-profissional");
     }
 
     @Test
