@@ -124,4 +124,27 @@ class ProfissionalServiceTest {
 
         verify(profissionalRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("deve inativar profissional e usuario de autenticacao")
+    void deveInativarProfissionalEUsuarioDeAutenticacao() {
+        Profissional profissional = new Profissional(
+                1L,
+                "Carlos",
+                "carlos@clinica.com",
+                null,
+                null,
+                Role.AUXILIAR,
+                true,
+                null
+        );
+
+        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
+
+        profissionalService.inativar(1L);
+
+        assertThat(profissional.isAtivo()).isFalse();
+        verify(profissionalRepository).save(profissional);
+        verify(autenticacaoClientService).inativarUsuarioInterno("carlos@clinica.com");
+    }
 }

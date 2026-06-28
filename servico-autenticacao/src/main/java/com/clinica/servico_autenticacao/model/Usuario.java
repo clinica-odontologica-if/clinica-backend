@@ -26,5 +26,6 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private boolean ativo = true;
 
 }

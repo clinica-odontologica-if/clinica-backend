@@ -79,6 +79,21 @@ public class AuthController {
         }
     }
 
+    @PatchMapping("/usuarios/interno/inativar")
+    @PreAuthorize("hasRole('SERVICE')")
+    public ResponseEntity<?> inativarUsuarioInterno(@RequestParam String email) {
+        try {
+            authService.inativarUsuarioInterno(email);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", 400,
+                    "erro", "Dados invalidos",
+                    "mensagem", e.getMessage()
+            ));
+        }
+    }
+
     // Método auxiliar TEMPORÁRIO — use só para gerar hashes, depois remova
     @GetMapping("/hash")
     @Profile("dev")

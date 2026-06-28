@@ -105,6 +105,12 @@ services:
       ADMIN_SENHA_AUXILIAR: ${ADMIN_SENHA_AUXILIAR}
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/auth/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
@@ -164,9 +170,12 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - servico-autenticacao
-      - servico-profissional
-      - servico-paciente
+      servico-autenticacao:
+        condition: service_healthy
+      servico-profissional:
+        condition: service_started
+      servico-paciente:
+        condition: service_started
     networks:
       - clinica-net
 

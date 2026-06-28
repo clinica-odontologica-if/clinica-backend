@@ -96,6 +96,7 @@ public class ProfissionalService {
 
         profissional.setAtivo(false);
         profissionalRepository.save(profissional);
+        autenticacaoClientService.inativarUsuarioInterno(profissional.getEmail());
     }
 
     private void validarCadastro(ProfissionalRequest request) {

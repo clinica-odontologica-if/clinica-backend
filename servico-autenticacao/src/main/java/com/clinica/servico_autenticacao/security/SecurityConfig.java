@@ -39,7 +39,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/usuarios/interno",
-                                "/api/auth/usuarios/interno"
+                                "/auth/usuarios/interno/inativar",
+                                "/api/auth/usuarios/interno",
+                                "/api/auth/usuarios/interno/inativar"
                         ).hasRole("SERVICE")
                         .requestMatchers(
                                 "/auth/login",

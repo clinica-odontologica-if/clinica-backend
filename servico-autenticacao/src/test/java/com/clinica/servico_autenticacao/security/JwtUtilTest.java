@@ -23,7 +23,8 @@ class JwtUtilTest {
                 "Dentista",
                 "dentista@clinica.com",
                 "hashSenha",
-                Role.DENTISTA
+                Role.DENTISTA,
+                true
         );
     }
 

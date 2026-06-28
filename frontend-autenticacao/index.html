@@ -115,12 +115,14 @@
       <div class="panel-heading">
         <div>
           <p class="eyebrow">Equipe</p>
-          <h3>Cadastrar profissional</h3>
+          <h3 id="profissionalFormTitulo">Cadastrar profissional</h3>
         </div>
         <span id="profissionaisStatus" class="status-pill">aguardando</span>
       </div>
 
       <form id="profissionalForm" class="data-form">
+        <input id="profissionalId" name="id" type="hidden" />
+
         <label for="profissionalNome">Nome</label>
         <input id="profissionalNome" name="nome" type="text" autocomplete="name" required />
 
@@ -143,7 +145,10 @@
           <input id="profissionalEspecialidade" name="especialidade" type="text" />
         </div>
 
-        <button id="salvarProfissionalButton" type="submit" class="primary-button">Salvar</button>
+        <div class="form-actions">
+          <button id="salvarProfissionalButton" type="submit" class="primary-button">Salvar</button>
+          <button id="cancelarEdicaoProfissionalButton" type="button" class="secondary-button" hidden>Cancelar</button>
+        </div>
         <p id="profissionalMessage" class="message" role="status"></p>
       </form>
     </article>
@@ -165,11 +170,12 @@
             <th>Email</th>
             <th>Perfil</th>
             <th>Detalhes</th>
+            <th>Acoes</th>
           </tr>
           </thead>
           <tbody id="profissionaisTabela">
           <tr>
-            <td colspan="4">Carregando...</td>
+            <td colspan="5">Carregando...</td>
           </tr>
           </tbody>
         </table>
@@ -266,6 +272,6 @@
   </article>
 </template>
 
-<script src="./app.js"></script>
+<script type="module" src="./scripts/app.js"></script>
 </body>
 </html>
