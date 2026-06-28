@@ -1,0 +1,36 @@
+name: CI - Servico de Atendimento
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'servico-atendimento/**'
+      - '.github/workflows/atendimento-ci.yml'
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'servico-atendimento/**'
+      - '.github/workflows/atendimento-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./servico-atendimento
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Executar testes do servico de atendimento
+        run: mvn clean test
