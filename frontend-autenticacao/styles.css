@@ -448,6 +448,10 @@ textarea:focus {
   align-items: start;
 }
 
+.workspace-grid.single-panel {
+  grid-template-columns: 1fr;
+}
+
 .panel-heading {
   margin-bottom: 18px;
   display: flex;

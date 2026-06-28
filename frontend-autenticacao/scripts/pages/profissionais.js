@@ -1,6 +1,9 @@
 import { getAuthHeaders, getErrorMessage, getToken, parseResponse } from "../api.js";
 import { setPageMessage } from "../messages.js";
+import { hasAnyRole } from "../session.js";
 import { escapeHtml } from "../utils.js";
+
+const canManageProfissionais = () => hasAnyRole("GERENTE");
 
 const renderProfissionais = (profissionais) => {
   const tbody = document.querySelector("#profissionaisTabela");
@@ -74,6 +77,11 @@ const toggleCamposDentista = () => {
 const cadastrarProfissional = async (event) => {
   event.preventDefault();
 
+  if (!canManageProfissionais()) {
+    setPageMessage("#profissionalMessage", "Seu perfil nao permite cadastrar profissionais.", "error");
+    return;
+  }
+
   const formProfissional = event.currentTarget;
   const button = document.querySelector("#salvarProfissionalButton");
   const formData = new FormData(formProfissional);
@@ -118,8 +126,15 @@ export const initProfissionaisPage = () => {
   const formProfissional = document.querySelector("#profissionalForm");
   const role = document.querySelector("#profissionalRole");
   const reloadButton = document.querySelector("#recarregarProfissionaisButton");
+  const workspace = formProfissional?.closest(".workspace-grid");
+  const formPanel = formProfissional?.closest(".panel");
 
   if (!formProfissional || formProfissional.dataset.ready === "true") return;
+
+  if (!canManageProfissionais()) {
+    formPanel.hidden = true;
+    workspace.classList.add("single-panel");
+  }
 
   formProfissional.dataset.ready = "true";
   role.addEventListener("change", toggleCamposDentista);
