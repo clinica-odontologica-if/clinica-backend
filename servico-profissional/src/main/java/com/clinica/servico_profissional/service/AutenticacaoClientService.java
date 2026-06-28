@@ -52,6 +52,28 @@ public class AutenticacaoClientService {
         }
     }
 
+    public void inativarUsuarioInterno(String email) {
+        String tokenServico = jwtUtil.gerarTokenServico(NOME_SERVICO);
+
+        try {
+            webClientBuilder.build()
+                    .patch()
+                    .uri(autenticacaoBaseUrl + "/auth/usuarios/interno/inativar?email={email}", email)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenServico)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+        } catch (WebClientResponseException e) {
+            log.warn("Servico de autenticacao recusou inativacao de usuario interno. Status: {}, Body: {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RegraDeNegocioException(extrairMensagemErro(e));
+        } catch (WebClientRequestException e) {
+            log.warn("Falha de comunicacao com servico de autenticacao em {}: {}",
+                    autenticacaoBaseUrl, e.getMessage());
+            throw new RegraDeNegocioException("Nao foi possivel comunicar com o servico de autenticacao.");
+        }
+    }
+
     private String extrairMensagemErro(WebClientResponseException e) {
         String body = e.getResponseBodyAsString();
         if (body != null && body.contains("Ja existe um usuario com este email")) {

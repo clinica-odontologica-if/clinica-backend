@@ -40,7 +40,8 @@ class AuthServiceTest {
                 "Gerente",
                 "gerente@clinica.com",
                 "$2a$10$hashFakeParaTeste",
-                Role.GERENTE
+                Role.GERENTE,
+                true
         );
     }
 
@@ -85,5 +86,19 @@ class AuthServiceTest {
         )
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Senha incorreta");
+    }
+
+    @Test
+    @DisplayName("deve bloquear autenticacao quando usuario esta inativo")
+    void deveBloquearAutenticacaoQuandoUsuarioInativo() {
+        usuarioGerente.setAtivo(false);
+        when(usuarioRepository.findByEmail("gerente@clinica.com"))
+                .thenReturn(Optional.of(usuarioGerente));
+
+        assertThatThrownBy(() ->
+                authService.autenticar("gerente@clinica.com", "senha123")
+        )
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Usuario inativo");
     }
 }

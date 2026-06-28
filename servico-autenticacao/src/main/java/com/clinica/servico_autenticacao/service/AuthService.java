@@ -26,6 +26,9 @@ public class AuthService {
         if (usuario.isEmpty()) {
             throw new RuntimeException("Usuario nao encontrado");
         }
+        if (!usuario.get().isAtivo()) {
+            throw new RuntimeException("Usuario inativo");
+        }
         if (!passwordEncoder.matches(senha, usuario.get().getSenha())) {
             throw new RuntimeException("Senha incorreta");
         }
@@ -64,7 +67,8 @@ public class AuthService {
                 request.getNome(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getSenha()),
-                Role.GERENTE
+                Role.GERENTE,
+                true
         );
 
         Usuario salvo = usuarioRepository.save(gerente);
@@ -85,7 +89,8 @@ public class AuthService {
                 request.getNome().trim(),
                 request.getEmail().trim(),
                 passwordEncoder.encode(request.getSenha()),
-                request.getRole()
+                request.getRole(),
+                true
         );
 
         Usuario salvo = usuarioRepository.save(usuario);
@@ -110,6 +115,19 @@ public class AuthService {
         if (request.getRole() == null) {
             throw new IllegalArgumentException("O campo role e obrigatorio.");
         }
+    }
+
+    public void inativarUsuarioInterno(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("O campo email e obrigatorio.");
+        }
+
+        Usuario usuario = usuarioRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado."));
+
+        usuario.setAtivo(false);
+        usuarioRepository.save(usuario);
+        log.info("Usuario interno inativado: {}", usuario.getEmail());
     }
 
     // Exceção interna para representar o estado "setup já feito"
