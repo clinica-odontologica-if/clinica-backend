@@ -235,8 +235,15 @@ export const initPacientesPage = () => {
   const reloadButton = document.querySelector("#recarregarPacientesButton");
   const cancelButton = document.querySelector("#cancelarEdicaoPacienteButton");
   const tbody = document.querySelector("#pacientesTabela");
+  const workspace = formPaciente?.closest(".workspace-grid");
+  const formPanel = formPaciente?.closest(".panel");
 
   if (!formPaciente || formPaciente.dataset.ready === "true") return;
+
+  if (!canManagePacientes()) {
+    formPanel.hidden = true;
+    workspace.classList.add("single-panel");
+  }
 
   formPaciente.dataset.ready = "true";
   formPaciente.addEventListener("submit", salvarPaciente);
@@ -246,13 +253,6 @@ export const initPacientesPage = () => {
     setPageMessage("#pacienteMessage", "");
   });
   tbody.addEventListener("click", handlePacienteAction);
-
-  if (!canManagePacientes()) {
-    formPaciente.querySelectorAll("input, textarea, button").forEach((element) => {
-      element.disabled = true;
-    });
-    setPageMessage("#pacienteMessage", "Seu perfil permite apenas visualizar pacientes.");
-  }
 
   carregarPacientes();
 };

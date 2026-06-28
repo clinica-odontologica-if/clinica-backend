@@ -3,6 +3,7 @@ package com.clinica.servico_paciente.exception;
 import com.clinica.servico_paciente.dto.ErroResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -46,6 +47,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErroResponse> handleAcessoNegado(
             AccessDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(403).body(
+                new ErroResponse(403, "Acesso negado", "Seu perfil nao tem permissao para esta acao", request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErroResponse> handleAutorizacaoNegada(
+            AuthorizationDeniedException ex, HttpServletRequest request) {
         return ResponseEntity.status(403).body(
                 new ErroResponse(403, "Acesso negado", "Seu perfil nao tem permissao para esta acao", request.getRequestURI())
         );
