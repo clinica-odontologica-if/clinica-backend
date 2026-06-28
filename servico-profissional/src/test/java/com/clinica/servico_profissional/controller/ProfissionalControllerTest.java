@@ -19,10 +19,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProfissionalController.class)
@@ -95,6 +98,77 @@ class ProfissionalControllerTest {
                 .andExpect(status().isCreated());
 
         verify(profissionalService).cadastrar(any(ProfissionalRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ATENDENTE")
+    @DisplayName("deve bloquear edicao quando usuario nao for gerente")
+    void deveBloquearEdicaoQuandoUsuarioNaoForGerente() throws Exception {
+        ProfissionalRequest request = new ProfissionalRequest(
+                "Ana",
+                "ana@clinica.com",
+                null,
+                null,
+                Role.ATENDENTE
+        );
+
+        mockMvc.perform(put("/profissionais/1")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(profissionalService, never()).atualizar(any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "GERENTE")
+    @DisplayName("deve permitir edicao quando usuario for gerente")
+    void devePermitirEdicaoQuandoUsuarioForGerente() throws Exception {
+        ProfissionalRequest request = new ProfissionalRequest(
+                "Ana",
+                "ana@clinica.com",
+                null,
+                null,
+                Role.ATENDENTE
+        );
+        ProfissionalResponse response = new ProfissionalResponse(
+                1L,
+                "Ana",
+                "ana@clinica.com",
+                null,
+                null,
+                Role.ATENDENTE,
+                true
+        );
+
+        when(profissionalService.atualizar(eq(1L), any(ProfissionalRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/profissionais/1")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(profissionalService).atualizar(eq(1L), any(ProfissionalRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ATENDENTE")
+    @DisplayName("deve bloquear inativacao quando usuario nao for gerente")
+    void deveBloquearInativacaoQuandoUsuarioNaoForGerente() throws Exception {
+        mockMvc.perform(patch("/profissionais/1/inativar"))
+                .andExpect(status().isForbidden());
+
+        verify(profissionalService, never()).inativar(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "GERENTE")
+    @DisplayName("deve permitir inativacao quando usuario for gerente")
+    void devePermitirInativacaoQuandoUsuarioForGerente() throws Exception {
+        mockMvc.perform(patch("/profissionais/1/inativar"))
+                .andExpect(status().isNoContent());
+
+        verify(profissionalService).inativar(1L);
     }
 
     @TestConfiguration
