@@ -4,6 +4,8 @@ import com.clinica.servico_atendimento.dto.ErroResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -24,6 +26,24 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return criarResposta(HttpStatus.BAD_REQUEST, "Regra de negocio violada", exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroResponse> tratarValidacao(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
+    ) {
+        String mensagem = exception.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(erro -> erro.getDefaultMessage())
+                .orElse("Dados invalidos");
+
+        return criarResposta(HttpStatus.BAD_REQUEST, "Dados invalidos", mensagem, request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErroResponse> tratarAcessoNegado(AccessDeniedException exception, HttpServletRequest request) {
+        return criarResposta(HttpStatus.FORBIDDEN, "Acesso negado", exception.getMessage(), request);
     }
 
     @ExceptionHandler(ServicoIndisponivelException.class)
