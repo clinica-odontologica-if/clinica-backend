@@ -6,6 +6,7 @@ import com.clinica.servico_atendimento.client.ProfissionalClient;
 import com.clinica.servico_atendimento.client.ProfissionalClientResponse;
 import com.clinica.servico_atendimento.dto.AtendimentoRequest;
 import com.clinica.servico_atendimento.dto.AtendimentoResponse;
+import com.clinica.servico_atendimento.dto.RealizacaoAtendimentoRequest;
 import com.clinica.servico_atendimento.dto.StatusAtendimentoRequest;
 import com.clinica.servico_atendimento.exception.RegraDeNegocioException;
 import com.clinica.servico_atendimento.model.Atendimento;
@@ -22,6 +23,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -145,7 +147,7 @@ class AtendimentoServiceTest {
                 autenticacaoDentista(),
                 "Bearer token"
         )).isInstanceOf(AccessDeniedException.class)
-                .hasMessage("Dentista pode alterar apenas os proprios atendimentos");
+                .hasMessage("Dentista pode acessar apenas os proprios atendimentos");
     }
 
     @Test
@@ -166,6 +168,80 @@ class AtendimentoServiceTest {
         assertThat(response.realizadoEm()).isNotNull();
     }
 
+
+    @Test
+    @DisplayName("deve buscar atendimento por id respeitando acesso do dentista")
+    void deveBuscarAtendimentoPorId() {
+        Atendimento atendimento = atendimentoSalvo(2L);
+        when(atendimentoRepository.findByIdAndAtivoTrue(10L)).thenReturn(Optional.of(atendimento));
+        when(profissionalClient.buscarMeuPerfil("Bearer token")).thenReturn(dentistaAtivo(2L));
+
+        AtendimentoResponse response = atendimentoService.buscarPorId(10L, autenticacaoDentista(), "Bearer token");
+
+        assertThat(response.id()).isEqualTo(10L);
+        assertThat(response.profissionalId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("deve realizar atendimento preenchendo dados clinicos e financeiros")
+    void deveRealizarAtendimento() {
+        Atendimento atendimento = atendimentoSalvo(2L);
+        when(atendimentoRepository.findByIdAndAtivoTrue(10L)).thenReturn(Optional.of(atendimento));
+        when(atendimentoRepository.save(atendimento)).thenReturn(atendimento);
+
+        AtendimentoResponse response = atendimentoService.realizar(
+                10L,
+                new RealizacaoAtendimentoRequest("Profilaxia", "Paciente sem queixas", BigDecimal.valueOf(150)),
+                autenticacaoGerente(),
+                "Bearer token"
+        );
+
+        assertThat(response.status()).isEqualTo(StatusAtendimento.REALIZADO);
+        assertThat(response.procedimentoRealizado()).isEqualTo("Profilaxia");
+        assertThat(response.observacoes()).isEqualTo("Paciente sem queixas");
+        assertThat(response.valor()).isEqualByComparingTo("150");
+        assertThat(response.realizadoEm()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("deve impedir realizar atendimento cancelado")
+    void deveImpedirRealizarAtendimentoCancelado() {
+        Atendimento atendimento = atendimentoSalvo(2L);
+        atendimento.setStatus(StatusAtendimento.CANCELADO);
+        when(atendimentoRepository.findByIdAndAtivoTrue(10L)).thenReturn(Optional.of(atendimento));
+
+        assertThatThrownBy(() -> atendimentoService.realizar(
+                10L,
+                new RealizacaoAtendimentoRequest("Profilaxia", null, BigDecimal.valueOf(150)),
+                autenticacaoGerente(),
+                "Bearer token"
+        )).isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Atendimento cancelado nao pode ser realizado");
+    }
+
+    @Test
+    @DisplayName("deve cancelar atendimento agendado")
+    void deveCancelarAtendimentoAgendado() {
+        Atendimento atendimento = atendimentoSalvo(2L);
+        when(atendimentoRepository.findByIdAndAtivoTrue(10L)).thenReturn(Optional.of(atendimento));
+        when(atendimentoRepository.save(atendimento)).thenReturn(atendimento);
+
+        AtendimentoResponse response = atendimentoService.cancelar(10L, autenticacaoGerente(), "Bearer token");
+
+        assertThat(response.status()).isEqualTo(StatusAtendimento.CANCELADO);
+    }
+
+    @Test
+    @DisplayName("deve impedir cancelar atendimento realizado")
+    void deveImpedirCancelarAtendimentoRealizado() {
+        Atendimento atendimento = atendimentoSalvo(2L);
+        atendimento.setStatus(StatusAtendimento.REALIZADO);
+        when(atendimentoRepository.findByIdAndAtivoTrue(10L)).thenReturn(Optional.of(atendimento));
+
+        assertThatThrownBy(() -> atendimentoService.cancelar(10L, autenticacaoGerente(), "Bearer token"))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Atendimento realizado nao pode ser cancelado");
+    }
     private AtendimentoRequest requestPadrao() {
         return new AtendimentoRequest(
                 1L,

@@ -2,6 +2,7 @@ package com.clinica.servico_atendimento.controller;
 
 import com.clinica.servico_atendimento.dto.AtendimentoRequest;
 import com.clinica.servico_atendimento.dto.AtendimentoResponse;
+import com.clinica.servico_atendimento.dto.RealizacaoAtendimentoRequest;
 import com.clinica.servico_atendimento.dto.StatusAtendimentoRequest;
 import com.clinica.servico_atendimento.model.StatusAtendimento;
 import com.clinica.servico_atendimento.service.AtendimentoService;
@@ -63,6 +64,16 @@ public class AtendimentoController {
         ));
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE', 'DENTISTA')")
+    public ResponseEntity<AtendimentoResponse> buscarPorId(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
+    ) {
+        return ResponseEntity.ok(atendimentoService.buscarPorId(id, authentication, authorizationHeader));
+    }
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE', 'DENTISTA')")
     public ResponseEntity<AtendimentoResponse> atualizarStatus(
@@ -72,5 +83,26 @@ public class AtendimentoController {
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
     ) {
         return ResponseEntity.ok(atendimentoService.atualizarStatus(id, dto, authentication, authorizationHeader));
+    }
+
+    @PatchMapping("/{id}/realizar")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE', 'DENTISTA')")
+    public ResponseEntity<AtendimentoResponse> realizar(
+            @PathVariable Long id,
+            @Valid @RequestBody RealizacaoAtendimentoRequest dto,
+            Authentication authentication,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
+    ) {
+        return ResponseEntity.ok(atendimentoService.realizar(id, dto, authentication, authorizationHeader));
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE', 'DENTISTA')")
+    public ResponseEntity<AtendimentoResponse> cancelar(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
+    ) {
+        return ResponseEntity.ok(atendimentoService.cancelar(id, authentication, authorizationHeader));
     }
 }

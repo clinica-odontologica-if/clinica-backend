@@ -144,6 +144,91 @@ class AtendimentoControllerTest {
                 .andExpect(jsonPath("$.status").value("REALIZADO"));
     }
 
+
+    @Test
+    @WithMockUser(roles = "DENTISTA")
+    @DisplayName("deve buscar atendimento por id")
+    void deveBuscarAtendimentoPorId() throws Exception {
+        when(atendimentoService.buscarPorId(eq(10L), any(), eq("Bearer token"))).thenReturn(responsePadrao());
+
+        mockMvc.perform(get("/atendimentos/10")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10));
+    }
+
+    @Test
+    @WithMockUser(roles = "DENTISTA")
+    @DisplayName("deve realizar atendimento")
+    void deveRealizarAtendimento() throws Exception {
+        AtendimentoResponse response = responseRealizado();
+        when(atendimentoService.realizar(eq(10L), any(), any(), eq("Bearer token"))).thenReturn(response);
+
+        mockMvc.perform(patch("/atendimentos/10/realizar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "procedimentoRealizado": "Profilaxia",
+                                  "observacoes": "Paciente sem queixas",
+                                  "valor": 150.00
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REALIZADO"))
+                .andExpect(jsonPath("$.procedimentoRealizado").value("Profilaxia"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ATENDENTE")
+    @DisplayName("deve cancelar atendimento")
+    void deveCancelarAtendimento() throws Exception {
+        AtendimentoResponse response = new AtendimentoResponse(
+                10L,
+                1L,
+                "Maria Silva",
+                2L,
+                "Dr Joao",
+                "joao@clinica.com",
+                LocalDate.of(2099, 1, 10),
+                LocalTime.of(9, 0),
+                StatusAtendimento.CANCELADO,
+                "Consulta inicial",
+                null,
+                null,
+                true,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                null
+        );
+        when(atendimentoService.cancelar(eq(10L), any(), eq("Bearer token"))).thenReturn(response);
+
+        mockMvc.perform(patch("/atendimentos/10/cancelar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELADO"));
+    }
+
+    private AtendimentoResponse responseRealizado() {
+        return new AtendimentoResponse(
+                10L,
+                1L,
+                "Maria Silva",
+                2L,
+                "Dr Joao",
+                "joao@clinica.com",
+                LocalDate.of(2099, 1, 10),
+                LocalTime.of(9, 0),
+                StatusAtendimento.REALIZADO,
+                "Paciente sem queixas",
+                "Profilaxia",
+                java.math.BigDecimal.valueOf(150),
+                true,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+    }
     private AtendimentoResponse responsePadrao() {
         return new AtendimentoResponse(
                 10L,

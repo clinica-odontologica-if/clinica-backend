@@ -6,6 +6,7 @@ import com.clinica.servico_atendimento.client.ProfissionalClient;
 import com.clinica.servico_atendimento.client.ProfissionalClientResponse;
 import com.clinica.servico_atendimento.dto.AtendimentoRequest;
 import com.clinica.servico_atendimento.dto.AtendimentoResponse;
+import com.clinica.servico_atendimento.dto.RealizacaoAtendimentoRequest;
 import com.clinica.servico_atendimento.dto.StatusAtendimentoRequest;
 import com.clinica.servico_atendimento.exception.RecursoNaoEncontradoException;
 import com.clinica.servico_atendimento.exception.RegraDeNegocioException;
@@ -77,6 +78,13 @@ public class AtendimentoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public AtendimentoResponse buscarPorId(Long id, Authentication authentication, String authorizationHeader) {
+        Atendimento atendimento = buscarAtendimentoAtivo(id);
+        validarAcessoDoDentista(atendimento, authentication, authorizationHeader);
+        return AtendimentoResponse.from(atendimento);
+    }
+
     @Transactional
     public AtendimentoResponse atualizarStatus(
             Long id,
@@ -93,6 +101,36 @@ public class AtendimentoService {
             atendimento.setRealizadoEm(LocalDateTime.now());
         }
 
+        return AtendimentoResponse.from(atendimentoRepository.save(atendimento));
+    }
+
+    @Transactional
+    public AtendimentoResponse realizar(
+            Long id,
+            RealizacaoAtendimentoRequest dto,
+            Authentication authentication,
+            String authorizationHeader
+    ) {
+        Atendimento atendimento = buscarAtendimentoAtivo(id);
+        validarAcessoDoDentista(atendimento, authentication, authorizationHeader);
+        validarRealizacao(atendimento);
+
+        atendimento.setStatus(StatusAtendimento.REALIZADO);
+        atendimento.setProcedimentoRealizado(dto.procedimentoRealizado());
+        atendimento.setObservacoes(dto.observacoes() != null ? dto.observacoes() : atendimento.getObservacoes());
+        atendimento.setValor(dto.valor());
+        atendimento.setRealizadoEm(LocalDateTime.now());
+
+        return AtendimentoResponse.from(atendimentoRepository.save(atendimento));
+    }
+
+    @Transactional
+    public AtendimentoResponse cancelar(Long id, Authentication authentication, String authorizationHeader) {
+        Atendimento atendimento = buscarAtendimentoAtivo(id);
+        validarAcessoDoDentista(atendimento, authentication, authorizationHeader);
+        validarCancelamento(atendimento);
+
+        atendimento.setStatus(StatusAtendimento.CANCELADO);
         return AtendimentoResponse.from(atendimentoRepository.save(atendimento));
     }
 
@@ -154,7 +192,7 @@ public class AtendimentoService {
 
         ProfissionalClientResponse profissionalLogado = profissionalClient.buscarMeuPerfil(authorizationHeader);
         if (!atendimento.getProfissionalId().equals(profissionalLogado.id())) {
-            throw new AccessDeniedException("Dentista pode alterar apenas os proprios atendimentos");
+            throw new AccessDeniedException("Dentista pode acessar apenas os proprios atendimentos");
         }
     }
 
@@ -169,6 +207,26 @@ public class AtendimentoService {
 
         if (atendimento.getStatus() == StatusAtendimento.REALIZADO && novoStatus != StatusAtendimento.REALIZADO) {
             throw new RegraDeNegocioException("Atendimento realizado nao pode mudar de status");
+        }
+    }
+
+    private void validarRealizacao(Atendimento atendimento) {
+        if (atendimento.getStatus() == StatusAtendimento.CANCELADO) {
+            throw new RegraDeNegocioException("Atendimento cancelado nao pode ser realizado");
+        }
+
+        if (atendimento.getStatus() == StatusAtendimento.REALIZADO) {
+            throw new RegraDeNegocioException("Atendimento ja foi realizado");
+        }
+    }
+
+    private void validarCancelamento(Atendimento atendimento) {
+        if (atendimento.getStatus() == StatusAtendimento.REALIZADO) {
+            throw new RegraDeNegocioException("Atendimento realizado nao pode ser cancelado");
+        }
+
+        if (atendimento.getStatus() == StatusAtendimento.CANCELADO) {
+            throw new RegraDeNegocioException("Atendimento ja esta cancelado");
         }
     }
 
