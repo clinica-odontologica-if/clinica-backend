@@ -1,0 +1,211 @@
+{
+  "info": {
+    "name": "Clinica - Servico Atendimento",
+    "description": "Colecao de endpoints do servico-atendimento da Sprint 3.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "atendimentoId",
+      "value": "1"
+    },
+    {
+      "key": "pacienteId",
+      "value": "1"
+    },
+    {
+      "key": "profissionalId",
+      "value": "1"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos",
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Criar atendimento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"profissionalId\": {{profissionalId}},\n  \"data\": \"2099-01-10\",\n  \"hora\": \"09:00\",\n  \"observacoes\": \"Consulta inicial\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Listar atendimentos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos?data=2099-01-10&status=AGENDADO",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos"
+          ],
+          "query": [
+            {
+              "key": "data",
+              "value": "2099-01-10"
+            },
+            {
+              "key": "status",
+              "value": "AGENDADO"
+            },
+            {
+              "key": "pacienteId",
+              "value": "{{pacienteId}}",
+              "disabled": true
+            },
+            {
+              "key": "profissionalId",
+              "value": "{{profissionalId}}",
+              "disabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Buscar atendimento por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos/{{atendimentoId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos",
+            "{{atendimentoId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Confirmar atendimento",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"CONFIRMADO\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos/{{atendimentoId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos",
+            "{{atendimentoId}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Realizar atendimento",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"procedimentoRealizado\": \"Profilaxia\",\n  \"observacoes\": \"Paciente sem queixas\",\n  \"valor\": 150.00\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos/{{atendimentoId}}/realizar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos",
+            "{{atendimentoId}}",
+            "realizar"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cancelar atendimento",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/atendimentos/{{atendimentoId}}/cancelar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "atendimentos",
+            "{{atendimentoId}}",
+            "cancelar"
+          ]
+        }
+      }
+    }
+  ]
+}
