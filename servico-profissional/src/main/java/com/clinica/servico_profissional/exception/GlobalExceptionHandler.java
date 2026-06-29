@@ -3,6 +3,7 @@ package com.clinica.servico_profissional.exception;
 import com.clinica.servico_profissional.dto.ErroResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,7 +22,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> handleRegraDeNegocio(
             RegraDeNegocioException ex, HttpServletRequest request) {
         return ResponseEntity.status(400).body(
-                new ErroResponse(400, "Dados inválidos", ex.getMessage(), request.getRequestURI())
+                new ErroResponse(400, "Dados invalidos", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErroResponse> handleAcessoNegado(
+            AuthorizationDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(403).body(
+                new ErroResponse(403, "Acesso negado", "Seu perfil nao permite realizar esta acao.", request.getRequestURI())
         );
     }
 

@@ -1,6 +1,7 @@
 package com.clinica.servico_autenticacao.controller;
 
 import com.clinica.servico_autenticacao.dto.SetupRequest;
+import com.clinica.servico_autenticacao.dto.UsuarioInternoRequest;
 import com.clinica.servico_autenticacao.dto.UsuarioResponse;
 import com.clinica.servico_autenticacao.model.Usuario;
 import com.clinica.servico_autenticacao.security.JwtUtil;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,6 +63,37 @@ public class AuthController {
             ));
         }
     }
+
+    @PostMapping("/usuarios/interno")
+    @PreAuthorize("hasRole('SERVICE')")
+    public ResponseEntity<?> criarUsuarioInterno(@RequestBody UsuarioInternoRequest request) {
+        try {
+            UsuarioResponse response = authService.criarUsuarioInterno(request);
+            return ResponseEntity.status(201).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", 400,
+                    "erro", "Dados invalidos",
+                    "mensagem", e.getMessage()
+            ));
+        }
+    }
+
+    @PatchMapping("/usuarios/interno/inativar")
+    @PreAuthorize("hasRole('SERVICE')")
+    public ResponseEntity<?> inativarUsuarioInterno(@RequestParam String email) {
+        try {
+            authService.inativarUsuarioInterno(email);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", 400,
+                    "erro", "Dados invalidos",
+                    "mensagem", e.getMessage()
+            ));
+        }
+    }
+
     // Método auxiliar TEMPORÁRIO — use só para gerar hashes, depois remova
     @GetMapping("/hash")
     @Profile("dev")

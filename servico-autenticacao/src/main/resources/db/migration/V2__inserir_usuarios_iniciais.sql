@@ -14,20 +14,20 @@
 INSERT INTO usuarios (nome, email, senha, role) VALUES
                                                     ('Gerente',
                                                      'gerente@clinica.com',
-                                                     '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+                                                     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                                                      'GERENTE'),
 
                                                     ('Atendente',
                                                      'atendente@clinica.com',
-                                                     '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+                                                     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                                                      'ATENDENTE'),
 
                                                     ('Dentista',
                                                      'dentista@clinica.com',
-                                                     '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+                                                     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                                                      'DENTISTA'),
 
                                                     ('Auxiliar',
                                                      'auxiliar@clinica.com',
-                                                     '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+                                                     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                                                      'AUXILIAR');

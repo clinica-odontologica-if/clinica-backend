@@ -2,10 +2,10 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-COPY servico-profissional/pom.xml .
+COPY pom.xml .
 RUN mvn -q -DskipTests dependency:go-offline
 
-COPY servico-profissional/src ./src
+COPY src ./src
 RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre

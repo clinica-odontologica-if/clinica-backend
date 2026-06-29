@@ -1,22 +1,23 @@
 # CLAUDE.md - Instrucoes de Desenvolvimento
 
-Sistema de Gestao para Clinica Odontologica.
+Sistema de gestao para Clinica Odontologica.
 
-Leia este arquivo completamente antes de gerar qualquer codigo.
+Leia este arquivo completamente antes de gerar codigo para este repositorio.
 
 ## Contexto do Projeto
 
-Sistema de gestao para clinica odontologica construido com arquitetura de microsservicos.
-Cada servico de dominio e independente, tem seu proprio banco de dados e roda em container Docker.
-A comunicacao entre servicos ocorre via HTTP/REST com autenticacao JWT.
+Este repositorio usa arquitetura de microsservicos com Spring Boot no backend, infraestrutura via Docker Compose e um frontend estatico para autenticacao.
 
-A infraestrutura de microsservicos usa:
+A comunicacao entre servicos ocorre por HTTP/REST. O `servico-autenticacao` gera JWT, e os servicos protegidos devem validar esse token no header `Authorization: Bearer <token>`.
+
+Componentes atuais:
 
 - `config-server`: centraliza configuracoes via Spring Cloud Config.
 - `discovery-server`: registra e descobre servicos via Eureka.
-- `servico-autenticacao`: autentica usuarios, gera JWT e registra-se no Eureka.
-- `frontend-autenticacao`: interface web do fluxo de autenticacao.
-- `mysql`: banco usado pelo servico de autenticacao.
+- `servico-autenticacao`: autentica usuarios, gera JWT e expoe rotas de setup/login/health.
+- `servico-profissional`: servico de dominio para profissionais.
+- `frontend-autenticacao`: frontend estatico servido por Nginx.
+- `mysql`: banco relacional usado no ambiente Docker.
 
 ## Estrutura Atual do Repositorio
 
@@ -25,17 +26,16 @@ clinica-backend/
 |-- .github/workflows/
 |   |-- autenticacao-ci.yml
 |   |-- config-server-ci.yml
-|   `-- discovery-server-ci.yml
+|   |-- discovery-server-ci.yml
+|   `-- profissional-ci.yml
 |-- config-server/
 |   |-- Dockerfile
-|   `-- config-server/
-|       |-- pom.xml
-|       `-- src/
+|   |-- pom.xml
+|   `-- src/
 |-- discovery-server/
 |   |-- Dockerfile
-|   `-- discovery-server/
-|       |-- pom.xml
-|       `-- src/
+|   |-- pom.xml
+|   `-- src/
 |-- frontend-autenticacao/
 |   |-- Dockerfile
 |   |-- index.html
@@ -44,16 +44,20 @@ clinica-backend/
 |   `-- nginx.conf
 |-- servico-autenticacao/
 |   |-- Dockerfile
-|   `-- servico-autenticacao/
-|       |-- pom.xml
-|       `-- src/
+|   |-- pom.xml
+|   `-- src/
+|-- servico-profissional/
+|   |-- Dockerfile
+|   |-- pom.xml
+|   `-- src/
+|-- tools/
 |-- docs/
 |-- docker-compose.yml
 |-- pom.xml
 `-- README.md
 ```
 
-Observacao: os projetos Spring Boot estao em pastas internas duplicadas, por exemplo `config-server/config-server` e `discovery-server/discovery-server`. Respeite essa estrutura ao criar comandos, paths de CI e Dockerfiles.
+Observacao importante: os modulos Spring Boot atuais ficam diretamente nas pastas do modulo, por exemplo `servico-autenticacao/src`, `config-server/src` e `discovery-server/src`. Nao assuma pastas internas duplicadas como `servico-autenticacao/servico-autenticacao`.
 
 ## Servicos e Portas
 
@@ -62,50 +66,36 @@ Observacao: os projetos Spring Boot estao em pastas internas duplicadas, por exe
 | `config-server` | 8888 | Spring Cloud Config Server |
 | `discovery-server` | 8761 | Eureka Server |
 | `servico-autenticacao` | 8081 | API de autenticacao e JWT |
+| `servico-profissional` | 8082 | API de profissionais |
 | `frontend-autenticacao` | 3000 | Frontend servido por Nginx |
-| `mysql` | 3307:3306 | Banco `clinica_auth` |
-
-Servicos de dominio previstos:
-
-| Servico | Porta | Banco |
-| --- | ---: | --- |
-| `servico-autenticacao` | 8081 | `clinica_auth` |
-| `servico-profissional` | 8082 | `clinica_profissional` |
-| `servico-paciente` | 8083 | `clinica_paciente` |
+| `mysql` | 3307:3306 | Banco MySQL do ambiente Docker |
 
 ## Ordem de Inicializacao Local
 
-No Docker Compose, a ordem correta e:
+No Docker Compose, a ordem esperada e:
 
 1. `mysql`
 2. `config-server`
 3. `discovery-server`
 4. `servico-autenticacao`
-5. `frontend-autenticacao`
+5. `servico-profissional`
+6. `frontend-autenticacao`
 
-O `servico-autenticacao` deve importar configuracoes do Config Server e registrar-se no Eureka:
+Comando principal:
 
-```yaml
-spring:
-  config:
-    import: optional:configserver:http://localhost:8888
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+```powershell
+docker compose up --build
 ```
 
-Em containers, use os nomes dos servicos Docker:
+Depois de subir, o frontend fica em:
 
 ```text
-SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
-EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+http://localhost:3000
 ```
 
 ## Variaveis de Ambiente
 
-Nunca hardcode credenciais. Use `.env`, variaveis do ambiente local ou secrets no CI.
+Nunca hardcode credenciais em codigo. Use `.env`, variaveis de ambiente ou secrets do CI.
 
 Variaveis usadas atualmente:
 
@@ -116,45 +106,131 @@ Variaveis usadas atualmente:
 - `ADMIN_SENHA_DENTISTA`: senha inicial do dentista.
 - `ADMIN_SENHA_AUXILIAR`: senha inicial do auxiliar.
 
-## Perfis de Usuario (RBAC)
+## Frontend de Autenticacao
+
+O frontend fica em `frontend-autenticacao/` e deve continuar simples, sem framework.
+
+Arquivos:
+
+```text
+frontend-autenticacao/
+|-- index.html      -> estrutura completa: login + dashboard
+|-- styles.css      -> tema visual, layout responsivo e sidebar
+|-- app.js          -> login, localStorage, decode JWT e roteamento interno
+|-- nginx.conf      -> proxy /api/ para servico-autenticacao
+`-- Dockerfile      -> imagem Nginx
+```
+
+Arquitetura atual do `index.html`:
+
+```text
+index.html
+|-- #tela-login
+|   `-- formulario de login
+`-- #tela-dashboard
+    |-- .sidebar
+    |   |-- logo/menu
+    |   `-- dados do usuario
+    `-- #conteudo
+        `-- area dinamica para paginas futuras
+```
+
+Regras do frontend:
+
+- Nao usar React, Angular, Vue ou build step.
+- Manter HTML, CSS e JavaScript puro.
+- O token JWT deve ser salvo em `localStorage` usando a chave `clinica.auth.token`.
+- O token nao deve ser exibido na interface.
+- O perfil do usuario deve aparecer na sidebar.
+- O frontend pode decodificar localmente o payload do JWT para ler `sub`, `role`, `id` e futuras claims como `nome`.
+- O `nginx.conf` deve continuar fazendo proxy de `/api/` para `http://servico-autenticacao:8081/`.
+
+Para adicionar uma nova pagina no dashboard:
+
+1. Adicione um botao no menu com `data-page="nome-da-pagina"`.
+2. Adicione um `<template id="pagina-nome-da-pagina">...</template>` no `index.html`.
+3. Adicione o titulo correspondente em `pageTitles` no `app.js`.
+4. Nao altere a estrutura geral de `#tela-dashboard`, `.sidebar` ou `#conteudo` sem necessidade.
+
+## API de Autenticacao
+
+Rotas publicas atuais do `servico-autenticacao`:
+
+| Metodo | Rota | Uso |
+| --- | --- | --- |
+| `POST` | `/auth/login` | autentica usuario e retorna `{ "token": "..." }` |
+| `GET` | `/auth/health` | health check |
+| `POST` | `/auth/setup` | setup inicial do primeiro gerente |
+
+Pelo frontend, as rotas sao chamadas com prefixo `/api` por causa do Nginx:
+
+```text
+POST /api/auth/login
+GET /api/auth/health
+POST /api/auth/setup
+```
+
+JWT atual:
+
+- `sub`: email do usuario.
+- `role`: perfil do usuario.
+- `id`: id do usuario.
+- `exp`: expiracao.
+
+Se o frontend precisar mostrar o nome real do usuario sem chamar o backend, adicione a claim `nome` em `JwtUtil.gerarToken`.
+
+## Perfis de Usuario
+
+Perfis atuais:
 
 ```text
 GERENTE | ATENDENTE | DENTISTA | AUXILIAR
 ```
 
-Use `@PreAuthorize` nos controllers para proteger endpoints por perfil.
+Use `@PreAuthorize` nos controllers para proteger endpoints por perfil quando necessario.
+
+Exemplos:
+
+```java
+@PreAuthorize("hasRole('GERENTE')")
+@PostMapping
+public ResponseEntity<ProfissionalResponse> cadastrar(@RequestBody ProfissionalRequest dto) { }
+
+@PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE')")
+@GetMapping
+public ResponseEntity<List<ProfissionalResponse>> listar() { }
+```
 
 ## Estrutura de Pacotes dos Servicos de Dominio
 
-Todo servico de dominio deve seguir esta estrutura:
+Servicos de dominio devem seguir esta organizacao:
 
 ```text
 com.clinica.servico_<nome>/
 |-- controller/       -> classes @RestController
 |-- service/          -> classes @Service com regras de negocio
-|-- repository/       -> interfaces que estendem JpaRepository
-|-- model/            -> classes @Entity e enums
+|-- repository/       -> interfaces JpaRepository
+|-- model/            -> entidades JPA e enums
 |-- dto/              -> objetos Request e Response
-|-- security/         -> JwtFilter, JwtUtil, SecurityConfig
+|-- security/         -> JwtFilter, JwtUtil, SecurityConfig quando aplicavel
 `-- exception/        -> excecoes customizadas e handler global
 ```
 
 Regras:
 
-- NUNCA coloque logica de negocio no controller; ela pertence ao service.
-- NUNCA acesse repository diretamente no controller; sempre use service.
-- NUNCA retorne entidade JPA em endpoint; sempre retorne DTO de resposta.
-- NUNCA coloque senha em DTO de resposta.
-- SEMPRE use injecao por construtor com `@RequiredArgsConstructor`.
+- Nao coloque regra de negocio no controller.
+- Nao acesse repository diretamente no controller; use service.
+- Nao retorne entidade JPA em endpoint; retorne DTO.
+- Nao coloque senha em DTO de resposta.
+- Use injecao por construtor com `@RequiredArgsConstructor`.
+- Use portugues para nomes de dominio e ingles para termos tecnicos comuns.
 
-## Estrutura dos Servicos de Infraestrutura
-
-### Config Server
+## Config Server
 
 Localizacao:
 
 ```text
-config-server/config-server
+config-server/
 ```
 
 Pacote base:
@@ -165,9 +241,9 @@ com.clinica.config_server
 
 Responsabilidades:
 
-- Expor configuracoes centralizadas na porta `8888`.
+- Expor Spring Cloud Config na porta `8888`.
 - Usar `@EnableConfigServer`.
-- Buscar configuracoes no repositorio Git definido por `spring.cloud.config.server.git.uri`.
+- Buscar configuracoes no Git definido por `spring.cloud.config.server.git.uri`.
 - Expor health check em `/actuator/health`.
 
 Regras:
@@ -176,12 +252,12 @@ Regras:
 - Nao adicione controllers de dominio no Config Server.
 - Mantenha credenciais do Git em variaveis de ambiente.
 
-### Discovery Server
+## Discovery Server
 
 Localizacao:
 
 ```text
-discovery-server/discovery-server
+discovery-server/
 ```
 
 Pacote base:
@@ -206,15 +282,7 @@ eureka:
     fetch-registry: false
 ```
 
-Regras:
-
-- Nao adicione regras de negocio no Discovery Server.
-- Nao adicione banco de dados no Discovery Server.
-- Nao proteja a dashboard do Eureka com JWT sem definir antes uma estrategia clara de operacao.
-
 ## Nomenclatura
-
-### Classes
 
 | Tipo | Padrao | Exemplo |
 | --- | --- | --- |
@@ -226,7 +294,7 @@ Regras:
 | DTO saida | `{Entidade}Response` | `ProfissionalResponse` |
 | Excecao | `{Motivo}Exception` | `RecursoNaoEncontradoException` |
 
-### Metodos no Service
+Metodos comuns no service:
 
 | Operacao | Nome |
 | --- | --- |
@@ -236,40 +304,11 @@ Regras:
 | Atualizar | `atualizar(Long id, Request dto)` |
 | Inativar | `inativar(Long id)` |
 
-### Metodos no Controller
-
-| HTTP | Padrao |
-| --- | --- |
-| `POST /` | `cadastrar(@RequestBody Request dto)` |
-| `GET /` | `listar()` |
-| `GET /{id}` | `buscarPorId(@PathVariable Long id)` |
-| `PUT /{id}` | `atualizar(@PathVariable Long id, @RequestBody Request dto)` |
-| `PATCH /{id}/inativar` | `inativar(@PathVariable Long id)` |
-
-### Variaveis e Campos
-
-- Use `camelCase` para variaveis e metodos: `nomeCompleto`, `dataNascimento`.
-- Use `UPPER_SNAKE_CASE` para constantes: `EXPIRACAO_TOKEN`.
-- Use portugues para nomes de dominio: `paciente`, `profissional`, `atendimento`.
-- Use ingles para nomes tecnicos: `repository`, `service`, `controller`, `handler`.
-- Campos de data: `LocalDate` para datas e `LocalDateTime` para data e hora.
-
 ## Padrao de Resposta da API
 
 Resposta de sucesso: retorno direto do DTO.
 
-```json
-{
-  "id": 1,
-  "nome": "Dr. Joao Silva",
-  "email": "joao@clinica.com",
-  "especialidade": "Ortodontia",
-  "role": "DENTISTA",
-  "ativo": true
-}
-```
-
-Resposta de erro: sempre use este formato.
+Resposta de erro:
 
 ```json
 {
@@ -280,7 +319,7 @@ Resposta de erro: sempre use este formato.
 }
 ```
 
-Classe obrigatoria:
+DTO recomendado:
 
 ```java
 @Data
@@ -293,59 +332,9 @@ public class ErroResponse {
 }
 ```
 
-## Tratamento de Excecoes
-
-Excecoes customizadas obrigatorias em cada servico de dominio:
-
-```java
-public class RecursoNaoEncontradoException extends RuntimeException {
-    public RecursoNaoEncontradoException(String mensagem) {
-        super(mensagem);
-    }
-}
-
-public class RegraDeNegocioException extends RuntimeException {
-    public RegraDeNegocioException(String mensagem) {
-        super(mensagem);
-    }
-}
-```
-
-Handler global obrigatorio:
-
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(RecursoNaoEncontradoException.class)
-    public ResponseEntity<ErroResponse> handleNaoEncontrado(
-            RecursoNaoEncontradoException ex, HttpServletRequest request) {
-        return ResponseEntity.status(404).body(
-            new ErroResponse(404, "Recurso nao encontrado", ex.getMessage(), request.getRequestURI())
-        );
-    }
-
-    @ExceptionHandler(RegraDeNegocioException.class)
-    public ResponseEntity<ErroResponse> handleRegraDeNegocio(
-            RegraDeNegocioException ex, HttpServletRequest request) {
-        return ResponseEntity.status(400).body(
-            new ErroResponse(400, "Dados invalidos", ex.getMessage(), request.getRequestURI())
-        );
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErroResponse> handleErroGenerico(
-            Exception ex, HttpServletRequest request) {
-        return ResponseEntity.status(500).body(
-            new ErroResponse(500, "Erro interno", "Ocorreu um erro inesperado", request.getRequestURI())
-        );
-    }
-}
-```
-
 ## Seguranca - JWT
 
-O `JwtFilter` e `JwtUtil` devem ser consistentes entre os servicos protegidos.
+O `JwtFilter` e o `JwtUtil` devem ser consistentes entre os servicos protegidos.
 Use o `servico-autenticacao` como referencia.
 
 SecurityConfig padrao para servicos protegidos:
@@ -386,18 +375,6 @@ public class SecurityConfig {
 }
 ```
 
-Como proteger rotas por perfil:
-
-```java
-@PreAuthorize("hasRole('GERENTE')")
-@PostMapping
-public ResponseEntity<ProfissionalResponse> cadastrar(@RequestBody ProfissionalRequest dto) { }
-
-@PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE')")
-@GetMapping
-public ResponseEntity<List<PacienteResponse>> listar() { }
-```
-
 ## Padrao de Entidade
 
 ```java
@@ -427,66 +404,37 @@ public class Profissional {
 
 Regras:
 
-- Toda entidade tem `ativo` com padrao `true`.
-- Toda entidade tem `criadoEm` como `LocalDateTime`.
-- Nomes de tabela ficam no plural e em portugues: `profissionais`, `pacientes`.
-- Nunca delete registro de dominio; inative com `ativo = false`.
-
-## Padrao de DTO
-
-```java
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProfissionalRequest {
-    private String nome;
-    private String email;
-    private String especialidade;
-    private Role role;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProfissionalResponse {
-    private Long id;
-    private String nome;
-    private String email;
-    private String especialidade;
-    private Role role;
-    private boolean ativo;
-}
-```
+- Toda entidade de dominio deve ter `ativo` com padrao `true`, quando fizer sentido para o dominio.
+- Toda entidade de dominio deve ter `criadoEm` como `LocalDateTime`, quando fizer sentido para auditoria.
+- Nomes de tabela ficam no plural e em portugues.
+- Evite deletar registro de dominio; prefira inativar com `ativo = false`.
 
 ## Testes Automatizados
 
-Todo modulo Spring Boot deve ter testes automatizados em:
+Todo modulo Spring Boot deve ter testes em:
 
 ```text
 <modulo>/src/test/java
 <modulo>/src/test/resources
 ```
 
-Testes existentes:
-
-- `servico-autenticacao/servico-autenticacao/src/test/java/com/clinica/servico_autenticacao/ServicoAutenticacaoApplicationTests.java`
-- `config-server/config-server/src/test/java/com/clinica/config_server/ConfigServerApplicationTests.java`
-- `discovery-server/discovery-server/src/test/java/com/clinica/discovery_server/DiscoveryServerApplicationTests.java`
-
 Comandos por modulo:
 
 ```powershell
-cd servico-autenticacao/servico-autenticacao
-./mvnw.cmd clean test
+cd servico-autenticacao
+.\mvnw.cmd clean test
 
-cd ../../config-server/config-server
-./mvnw.cmd clean test
+cd ..\servico-profissional
+.\mvnw.cmd clean test
 
-cd ../../discovery-server/discovery-server
-./mvnw.cmd clean test
+cd ..\config-server
+.\mvnw.cmd clean test
+
+cd ..\discovery-server
+.\mvnw.cmd clean test
 ```
 
-Tambem e valido usar Maven instalado:
+Tambem e possivel rodar pela raiz, pois existe `pom.xml` agregador:
 
 ```powershell
 mvn clean test
@@ -494,64 +442,50 @@ mvn clean test
 
 Regras para testes:
 
-- SEMPRE rode `mvn clean test` no modulo alterado antes de finalizar uma tarefa.
-- Se alterar contrato entre servicos, rode os testes de todos os modulos afetados.
-- Se criar um novo modulo Spring Boot, adicione ao menos um teste `contextLoads`.
+- Rode os testes do modulo alterado antes de finalizar uma tarefa.
+- Se alterar contrato entre servicos, rode os testes dos modulos afetados.
+- Se criar novo modulo Spring Boot, adicione ao menos um teste `contextLoads`.
 - Para services de dominio, teste regras de negocio com JUnit e Mockito.
 - Para controllers, teste status HTTP, DTOs e autorizacao com Spring MVC Test quando aplicavel.
-- Para repository, use teste focado com banco em memoria ou ambiente de teste isolado.
 - Nao dependa de Config Server, Eureka ou MySQL real em teste unitario.
-- Use `src/test/resources/application.properties` ou `application.yml` para sobrescrever configuracoes externas durante testes.
 
-### CI GitHub Actions
+## CI GitHub Actions
 
-O repositorio possui pipelines separados:
+Workflows atuais:
 
 - `.github/workflows/autenticacao-ci.yml`
 - `.github/workflows/config-server-ci.yml`
 - `.github/workflows/discovery-server-ci.yml`
+- `.github/workflows/profissional-ci.yml`
 
-Cada pipeline:
-
-- usa JDK 21;
-- roda `mvn clean test`;
-- executa apenas quando ha mudancas no caminho do modulo correspondente.
-
-Ao adicionar novo servico, crie tambem um workflow proprio seguindo o mesmo padrao.
+Cada pipeline usa JDK 21, roda `mvn clean test` e deve ser mantido coerente com o caminho real do modulo.
 
 ## Regras Gerais
 
-- NUNCA use `System.out.println`; use `log.info()` ou `log.error()` com `@Slf4j`.
-- NUNCA faca `.get()` em `Optional`; use `.orElseThrow()`.
-- NUNCA retorne entidade JPA diretamente.
-- NUNCA coloque senha em DTO de resposta.
-- NUNCA hardcode credenciais.
-- SEMPRE inative registros com `ativo = false`.
-- SEMPRE retorne `201 Created` para POST bem-sucedido.
-- SEMPRE retorne `204 No Content` para inativacao bem-sucedida.
-- SEMPRE use `@RequiredArgsConstructor` e injecao via construtor.
-- SEMPRE exponha health check em servicos Dockerizados.
-- SEMPRE mantenha paths de Docker, Maven e CI coerentes com as pastas internas duplicadas.
+- Nao use `System.out.println`; use logger com `@Slf4j`.
+- Nao faca `.get()` em `Optional`; use `.orElseThrow()`.
+- Nao retorne entidade JPA diretamente.
+- Nao coloque senha em DTO de resposta.
+- Nao hardcode credenciais.
+- Retorne `201 Created` para POST bem-sucedido quando criar recurso.
+- Retorne `204 No Content` para inativacao bem-sucedida.
+- Use `@RequiredArgsConstructor` e injecao por construtor.
+- Exponha health check em servicos Dockerizados.
+- Mantenha paths de Docker, Maven e CI coerentes com as pastas reais do repositorio.
+- No frontend, preserve a arquitetura simples com `index.html`, `styles.css`, `app.js` e `nginx.conf`.
 
 ## Como usar este arquivo no Claude.ai
 
 1. Crie um novo projeto em `claude.ai/projects`.
 2. Nas instrucoes do projeto, cole o conteudo completo deste `CLAUDE.md`.
-3. Adicione como contexto os arquivos do servico especifico.
-4. Ao pedir codigo, informe o modulo afetado e peca para executar ou considerar os testes automatizados.
+3. Adicione como contexto os arquivos do modulo afetado.
+4. Ao pedir codigo, informe o modulo alterado e peca para considerar os testes automatizados.
 
 Exemplo de prompt eficaz:
 
 ```text
-Implemente o PacienteService com os metodos cadastrar, buscarPorId,
-listarAtivos, atualizar e inativar, seguindo os padroes do projeto.
-Inclua testes automatizados do service.
+Implemente a pagina de listagem de profissionais no frontend-autenticacao
+seguindo a arquitetura de templates e troca do #conteudo descrita no CLAUDE.md.
 ```
 
-Exemplo de prompt ruim:
-
-```text
-Faz um service de paciente pra mim.
-```
-
-Versao 1.1 - Sprint 2 - Clinica Odontologica
+Versao 1.2 - Sprint 2 - Clinica Odontologica

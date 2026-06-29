@@ -12,7 +12,45 @@ services:
     networks:
       - clinica-net
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mysql-profissional:
+    image: mysql:8.0
+    container_name: clinica-mysql-profissional
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_profissional
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_profissional_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mysql-paciente:
+    image: mysql:8.0
+    container_name: clinica-mysql-paciente
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_paciente
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_paciente_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -25,6 +63,7 @@ services:
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/clinica-odontologica-if/clinica-configs.git
       SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${GIT_USERNAME}
       SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${GIT_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8888:8888"
     networks:
@@ -50,8 +89,6 @@ services:
       retries: 10
       start_period: 30s
 
-
-
   servico-autenticacao:
     build: ./servico-autenticacao
     container_name: clinica-auth
@@ -61,9 +98,19 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
-
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_SENHA_GERENTE: ${ADMIN_SENHA_GERENTE}
+      ADMIN_SENHA_ATENDENTE: ${ADMIN_SENHA_ATENDENTE}
+      ADMIN_SENHA_DENTISTA: ${ADMIN_SENHA_DENTISTA}
+      ADMIN_SENHA_AUXILIAR: ${ADMIN_SENHA_AUXILIAR}
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/auth/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
@@ -79,12 +126,40 @@ services:
     container_name: clinica-profissional
     environment:
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_PROFISSIONAL_URL: jdbc:mysql://clinica-mysql-profissional:3306/clinica_profissional
+      SPRING_DATASOURCE_PROFISSIONAL_USERNAME: root
+      SPRING_DATASOURCE_PROFISSIONAL_PASSWORD: root
+      SERVICO_AUTENTICACAO_URL: http://servico-autenticacao:8081
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8082:8082"
     depends_on:
-      mysql:
+      mysql-profissional:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - clinica-net
+
+  servico-paciente:
+    build: ./servico-paciente
+    container_name: clinica-paciente
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_PACIENTE_URL: jdbc:mysql://clinica-mysql-paciente:3306/clinica_paciente
+      SPRING_DATASOURCE_PACIENTE_USERNAME: root
+      SPRING_DATASOURCE_PACIENTE_PASSWORD: root
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql-paciente:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
         condition: service_healthy
     networks:
       - clinica-net
@@ -95,12 +170,19 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - servico-autenticacao
+      servico-autenticacao:
+        condition: service_healthy
+      servico-profissional:
+        condition: service_started
+      servico-paciente:
+        condition: service_started
     networks:
       - clinica-net
 
 volumes:
   mysql_data:
+  mysql_profissional_data:
+  mysql_paciente_data:
 
 networks:
   clinica-net:

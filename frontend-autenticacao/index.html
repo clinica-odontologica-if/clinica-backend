@@ -1,51 +1,277 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clinica Odontologica | Login</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="page-shell">
-      <section class="brand-panel" aria-label="Clinica Odontologica">
-        <div class="brand-mark" aria-hidden="true">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinica Odontologica</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<main id="tela-login" class="login-shell">
+  <section class="login-brand" aria-label="Clinica Odontologica">
+    <div class="brand-mark" aria-hidden="true">
+      <span></span>
+    </div>
+
+    <div>
+      <p class="eyebrow">Clinica Odontologica</p>
+      <h1>Acesso ao sistema</h1>
+      <p class="support-text">Entre com um usuario cadastrado para acessar os servicos da clinica.</p>
+    </div>
+  </section>
+
+  <section class="login-area" aria-label="Formulario de login">
+    <form id="loginForm" class="login-form">
+      <div class="form-header">
+        <div>
+          <p class="eyebrow">Autenticacao</p>
+          <h2>Login</h2>
+        </div>
+        <span id="apiStatus" class="status-pill">verificando</span>
+      </div>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" value="gerente@clinica.com" required />
+
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="current-password" value="Gerente@2025" required />
+
+      <button id="submitButton" type="submit">Entrar</button>
+      <p id="message" class="message" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<main id="tela-dashboard" class="dashboard-shell" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        <div class="sidebar-mark" aria-hidden="true">
           <span></span>
         </div>
         <div>
-          <p class="eyebrow">Clinica Odontologica</p>
-          <h1>Acesso ao sistema</h1>
-          <p class="support-text">Entre com um usuario cadastrado para acessar os servicos da clinica.</p>
+          <strong>Clinica</strong>
+          <small>Odontologica</small>
         </div>
-      </section>
+      </div>
 
-      <section class="login-panel" aria-label="Formulario de login">
-        <form id="loginForm" class="login-form">
-          <div class="form-header">
-            <h2>Login</h2>
-            <span id="apiStatus" class="status-pill">verificando</span>
-          </div>
+      <nav class="sidebar-nav" aria-label="Menu principal">
+        <button type="button" class="nav-item active" data-page="inicio">Inicio</button>
+        <button type="button" class="nav-item" data-page="profissionais">Profissionais</button>
+        <button type="button" class="nav-item" data-page="consultas">Consultas</button>
+        <button type="button" class="nav-item" data-page="pacientes">Pacientes</button>
+        <button type="button" class="nav-item" data-page="configuracoes">Configuracoes</button>
+      </nav>
+    </div>
 
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" autocomplete="username" value="gerente@clinica.com" required />
+    <div class="user-card">
+      <div class="avatar" id="userInitials">U</div>
+      <div class="user-info">
+        <strong id="userName">Usuario</strong>
+        <span id="userRole">Perfil</span>
+      </div>
+      <button id="logoutButton" type="button" class="logout-button">Sair</button>
+    </div>
+  </aside>
 
-          <label for="senha">Senha</label>
-          <input id="senha" name="senha" type="password" autocomplete="current-password" value="123456" required />
+  <section class="main-panel">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Painel</p>
+        <h2 id="pageTitle">Inicio</h2>
+      </div>
+      <span id="dashboardStatus" class="status-pill ok">online</span>
+    </header>
 
-          <button id="submitButton" type="submit">Entrar</button>
-          <p id="message" class="message" role="status"></p>
-        </form>
+    <section id="conteudo" class="content-area" aria-live="polite"></section>
+  </section>
+</main>
 
-        <div id="sessionBox" class="session-box" hidden>
-          <div>
-            <span class="session-label">Token JWT</span>
-            <p id="tokenPreview"></p>
-          </div>
-          <button id="logoutButton" type="button" class="secondary-button">Sair</button>
+<template id="pagina-inicio">
+  <div class="page-grid">
+    <article class="metric-card">
+      <span>Consultas hoje</span>
+      <strong>0</strong>
+    </article>
+    <article class="metric-card">
+      <span>Pacientes ativos</span>
+      <strong>0</strong>
+    </article>
+    <article class="metric-card">
+      <span>Status</span>
+      <strong>Operando</strong>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h3>Bem-vindo</h3>
+    <p>Esta area esta pronta para receber as paginas futuras do sistema.</p>
+  </article>
+</template>
+
+<template id="pagina-profissionais">
+  <section class="workspace-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Equipe</p>
+          <h3 id="profissionalFormTitulo">Cadastrar profissional</h3>
         </div>
-      </section>
-    </main>
+        <span id="profissionaisStatus" class="status-pill">aguardando</span>
+      </div>
 
-    <script src="./app.js"></script>
-  </body>
+      <form id="profissionalForm" class="data-form">
+        <input id="profissionalId" name="id" type="hidden" />
+
+        <label for="profissionalNome">Nome</label>
+        <input id="profissionalNome" name="nome" type="text" autocomplete="name" required />
+
+        <label for="profissionalEmail">Email</label>
+        <input id="profissionalEmail" name="email" type="email" autocomplete="email" required />
+
+        <label for="profissionalRole">Perfil</label>
+        <select id="profissionalRole" name="role" required>
+          <option value="ATENDENTE">Atendente</option>
+          <option value="DENTISTA">Dentista</option>
+          <option value="AUXILIAR">Auxiliar</option>
+          <option value="GERENTE">Gerente</option>
+        </select>
+
+        <div id="camposDentista" class="conditional-fields" hidden>
+          <label for="profissionalCro">CRO</label>
+          <input id="profissionalCro" name="cro" type="text" />
+
+          <label for="profissionalEspecialidade">Especialidade</label>
+          <input id="profissionalEspecialidade" name="especialidade" type="text" />
+        </div>
+
+        <div class="form-actions">
+          <button id="salvarProfissionalButton" type="submit" class="primary-button">Salvar</button>
+          <button id="cancelarEdicaoProfissionalButton" type="button" class="secondary-button" hidden>Cancelar</button>
+        </div>
+        <p id="profissionalMessage" class="message" role="status"></p>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cadastros</p>
+          <h3>Profissionais ativos</h3>
+        </div>
+        <button id="recarregarProfissionaisButton" type="button" class="secondary-button">Atualizar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Perfil</th>
+            <th>Detalhes</th>
+            <th>Acoes</th>
+          </tr>
+          </thead>
+          <tbody id="profissionaisTabela">
+          <tr>
+            <td colspan="5">Carregando...</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</template>
+
+<template id="pagina-consultas">
+  <article class="panel">
+    <h3>Consultas</h3>
+    <p>Espaco reservado para listagem, criacao e acompanhamento de consultas.</p>
+  </article>
+</template>
+
+<template id="pagina-pacientes">
+  <section class="workspace-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cadastro</p>
+          <h3 id="pacienteFormTitulo">Cadastrar paciente</h3>
+        </div>
+        <span id="pacientesStatus" class="status-pill">aguardando</span>
+      </div>
+
+      <form id="pacienteForm" class="data-form">
+        <input id="pacienteId" name="id" type="hidden" />
+
+        <label for="pacienteNome">Nome</label>
+        <input id="pacienteNome" name="nome" type="text" autocomplete="name" required />
+
+        <label for="pacienteCpf">CPF</label>
+        <input id="pacienteCpf" name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" required />
+
+        <label for="pacienteDataNascimento">Data de nascimento</label>
+        <input id="pacienteDataNascimento" name="dataNascimento" type="date" required />
+
+        <label for="pacienteTelefone">Telefone</label>
+        <input id="pacienteTelefone" name="telefone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" required />
+
+        <label for="pacienteEmail">Email</label>
+        <input id="pacienteEmail" name="email" type="email" autocomplete="email" />
+
+        <label for="pacienteEndereco">Endereco</label>
+        <input id="pacienteEndereco" name="endereco" type="text" autocomplete="street-address" />
+
+        <label for="pacienteObservacoes">Observacoes</label>
+        <textarea id="pacienteObservacoes" name="observacoes" rows="4"></textarea>
+
+        <div class="form-actions">
+          <button id="salvarPacienteButton" type="submit" class="primary-button">Salvar</button>
+          <button id="cancelarEdicaoPacienteButton" type="button" class="secondary-button" hidden>Cancelar</button>
+        </div>
+        <p id="pacienteMessage" class="message" role="status"></p>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cadastros</p>
+          <h3>Pacientes ativos</h3>
+        </div>
+        <button id="recarregarPacientesButton" type="button" class="secondary-button">Atualizar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Acoes</th>
+          </tr>
+          </thead>
+          <tbody id="pacientesTabela">
+          <tr>
+            <td colspan="5">Carregando...</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</template>
+
+<template id="pagina-configuracoes">
+  <article class="panel">
+    <h3>Configuracoes</h3>
+    <p>Espaco reservado para preferencias e configuracoes administrativas.</p>
+  </article>
+</template>
+
+<script type="module" src="./scripts/app.js"></script>
+</body>
 </html>

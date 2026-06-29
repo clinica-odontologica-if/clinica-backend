@@ -2,15 +2,19 @@ package com.clinica.servico_profissional.service;
 
 import com.clinica.servico_profissional.dto.ProfissionalRequest;
 import com.clinica.servico_profissional.dto.ProfissionalResponse;
+import com.clinica.servico_profissional.dto.UsuarioInternoRequest;
 import com.clinica.servico_profissional.exception.RecursoNaoEncontradoException;
 import com.clinica.servico_profissional.exception.RegraDeNegocioException;
 import com.clinica.servico_profissional.model.Profissional;
+import com.clinica.servico_profissional.model.Role;
 import com.clinica.servico_profissional.repository.ProfissionalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.text.Normalizer;
+import java.time.Year;
 import java.util.List;
 
 @Slf4j
@@ -19,6 +23,7 @@ import java.util.List;
 public class ProfissionalService {
 
     private final ProfissionalRepository profissionalRepository;
+    private final AutenticacaoClientService autenticacaoClientService;
 
     public List<ProfissionalResponse> listarAtivos() {
         return profissionalRepository.findByAtivoTrue()
@@ -35,103 +40,119 @@ public class ProfissionalService {
         return toResponse(profissional);
     }
 
-    /**
-     * Cadastra um novo profissional.
-     *
-     * TODO (US-11): integrar com o servico-autenticacao para criar o usuário
-     * de login correspondente a este profissional (mesmo email/role).
-     * Por ora, o cadastro fica restrito aos dados de domínio do profissional.
-     */
+    @Transactional
     public ProfissionalResponse cadastrar(ProfissionalRequest request) {
-        validarDadosObrigatorios(request);
+        validarCadastro(request);
 
-        if (profissionalRepository.existsByEmail(request.getEmail())) {
-            throw new RegraDeNegocioException(
-                    "Já existe um profissional cadastrado com o email " + request.getEmail()
-            );
+        String email = normalizarEmail(request.getEmail());
+        if (profissionalRepository.existsByEmail(email)) {
+            throw new RegraDeNegocioException("Ja existe um profissional com este email.");
         }
 
-        Profissional profissional = new Profissional(
-                null,
-                request.getNome(),
-                request.getEmail(),
-                request.getCro(),
-                request.getEspecialidade(),
-                request.getRole(),
-                true,
-                LocalDateTime.now()
-        );
+        String senhaInicial = gerarSenhaInicial(request.getNome());
+        autenticacaoClientService.criarUsuarioInterno(new UsuarioInternoRequest(
+                request.getNome().trim(),
+                email,
+                senhaInicial,
+                request.getRole()
+        ));
 
-        Profissional salvo = profissionalRepository.save(profissional);
-        log.info("Profissional cadastrado com sucesso: {}", salvo.getEmail());
+        Profissional profissional = new Profissional();
+        profissional.setNome(request.getNome().trim());
+        profissional.setEmail(email);
+        profissional.setRole(request.getRole());
+        aplicarCamposDentista(profissional, request);
 
-        // TODO (US-11): chamar servico-autenticacao para criar o login deste profissional.
-
-        return toResponse(salvo);
+        return toResponse(profissionalRepository.save(profissional));
     }
 
-    /**
-     * Atualiza os dados de domínio de um profissional já existente.
-     * Não altera id, ativo ou criadoEm — esses campos não fazem parte
-     * do contrato de atualização.
-     */
+    @Transactional
     public ProfissionalResponse atualizar(Long id, ProfissionalRequest request) {
+        validarCadastro(request);
+
         Profissional profissional = profissionalRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
-                        "Profissional com id " + id + " não encontrado"
+                        "Profissional com id " + id + " nao encontrado"
                 ));
 
-        validarDadosObrigatorios(request);
-        validarEmailDisponivel(request.getEmail(), profissional);
+        String email = normalizarEmail(request.getEmail());
+        if (!profissional.getEmail().equalsIgnoreCase(email)) {
+            throw new RegraDeNegocioException("Email do profissional nao pode ser alterado nesta sprint.");
+        }
+        if (profissional.getRole() != request.getRole()) {
+            throw new RegraDeNegocioException("Perfil do profissional nao pode ser alterado nesta sprint.");
+        }
 
-        profissional.setNome(request.getNome());
-        profissional.setEmail(request.getEmail());
-        profissional.setCro(request.getCro());
-        profissional.setEspecialidade(request.getEspecialidade());
-        profissional.setRole(request.getRole());
+        profissional.setNome(request.getNome().trim());
+        aplicarCamposDentista(profissional, request);
 
-        Profissional atualizado = profissionalRepository.save(profissional);
-        log.info("Profissional atualizado com sucesso: id={}", atualizado.getId());
-
-        return toResponse(atualizado);
+        return toResponse(profissionalRepository.save(profissional));
     }
 
-    /**
-     * Inativa um profissional (soft delete). O registro nunca é removido
-     * do banco — apenas marcado como ativo = false, conforme regra do projeto.
-     */
+    @Transactional
     public void inativar(Long id) {
         Profissional profissional = profissionalRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
-                        "Profissional com id " + id + " não encontrado"
+                        "Profissional com id " + id + " nao encontrado"
                 ));
 
         profissional.setAtivo(false);
         profissionalRepository.save(profissional);
-
-        log.info("Profissional inativado com sucesso: id={}", id);
+        autenticacaoClientService.inativarUsuarioInterno(profissional.getEmail());
     }
 
-    private void validarEmailDisponivel(String novoEmail, Profissional profissionalAtual) {
-        boolean emailMudou = !novoEmail.equalsIgnoreCase(profissionalAtual.getEmail());
-
-        if (emailMudou && profissionalRepository.existsByEmail(novoEmail)) {
-            throw new RegraDeNegocioException(
-                    "Já existe um profissional cadastrado com o email " + novoEmail
-            );
+    private void validarCadastro(ProfissionalRequest request) {
+        if (request == null) {
+            throw new RegraDeNegocioException("Dados do profissional sao obrigatorios.");
         }
-    }
-
-    private void validarDadosObrigatorios(ProfissionalRequest request) {
         if (request.getNome() == null || request.getNome().isBlank()) {
-            throw new RegraDeNegocioException("O campo nome é obrigatório.");
+            throw new RegraDeNegocioException("O campo nome e obrigatorio.");
         }
         if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new RegraDeNegocioException("O campo email é obrigatório.");
+            throw new RegraDeNegocioException("O campo email e obrigatorio.");
+        }
+        if (!request.getEmail().contains("@")) {
+            throw new RegraDeNegocioException("O campo email deve ser valido.");
         }
         if (request.getRole() == null) {
-            throw new RegraDeNegocioException("O campo role é obrigatório.");
+            throw new RegraDeNegocioException("O campo role e obrigatorio.");
         }
+        if (request.getRole() == Role.DENTISTA) {
+            if (request.getCro() == null || request.getCro().isBlank()) {
+                throw new RegraDeNegocioException("O campo cro e obrigatorio para dentistas.");
+            }
+            if (request.getEspecialidade() == null || request.getEspecialidade().isBlank()) {
+                throw new RegraDeNegocioException("O campo especialidade e obrigatorio para dentistas.");
+            }
+        }
+    }
+
+    private void aplicarCamposDentista(Profissional profissional, ProfissionalRequest request) {
+        if (request.getRole() == Role.DENTISTA) {
+            profissional.setCro(request.getCro().trim());
+            profissional.setEspecialidade(request.getEspecialidade().trim());
+            return;
+        }
+
+        profissional.setCro(null);
+        profissional.setEspecialidade(null);
+    }
+
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase();
+    }
+
+    private String gerarSenhaInicial(String nome) {
+        String primeiroNome = nome.trim().split("\\s+")[0];
+        String semAcentos = Normalizer.normalize(primeiroNome, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^A-Za-z0-9]", "");
+
+        if (semAcentos.isBlank()) {
+            semAcentos = "Usuario";
+        }
+
+        return semAcentos + "@" + Year.now().getValue();
     }
 
     private ProfissionalResponse toResponse(Profissional profissional) {
