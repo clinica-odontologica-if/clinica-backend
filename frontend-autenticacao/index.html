@@ -58,7 +58,7 @@
       <nav class="sidebar-nav" aria-label="Menu principal">
         <button type="button" class="nav-item active" data-page="inicio">Inicio</button>
         <button type="button" class="nav-item" data-page="profissionais">Profissionais</button>
-        <button type="button" class="nav-item" data-page="consultas">Consultas</button>
+        <button type="button" class="nav-item" data-page="atendimentos">Atendimentos</button>
         <button type="button" class="nav-item" data-page="pacientes">Pacientes</button>
         <button type="button" class="nav-item" data-page="configuracoes">Configuracoes</button>
       </nav>
@@ -184,11 +184,101 @@
   </section>
 </template>
 
-<template id="pagina-consultas">
-  <article class="panel">
-    <h3>Consultas</h3>
-    <p>Espaco reservado para listagem, criacao e acompanhamento de consultas.</p>
-  </article>
+<template id="pagina-atendimentos">
+  <section class="workspace-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Agenda</p>
+          <h3>Novo atendimento</h3>
+        </div>
+        <span id="atendimentosStatus" class="status-pill">aguardando</span>
+      </div>
+
+      <form id="atendimentoForm" class="data-form">
+        <label for="atendimentoPacienteBusca">Paciente</label>
+        <div class="lookup-row">
+          <input id="atendimentoPacienteBusca" name="pacienteBusca" type="search" placeholder="Nome, CPF, telefone ou email" autocomplete="off" />
+          <button id="buscarPacientesAtendimentoButton" type="button" class="secondary-button">Buscar</button>
+        </div>
+        <select id="atendimentoPacienteId" name="pacienteId" required>
+          <option value="">Busque e selecione um paciente</option>
+        </select>
+
+        <label for="atendimentoProfissionalBusca">Dentista</label>
+        <div class="lookup-row">
+          <input id="atendimentoProfissionalBusca" name="profissionalBusca" type="search" placeholder="Nome, especialidade, CRO ou email" autocomplete="off" />
+          <button id="buscarProfissionaisAtendimentoButton" type="button" class="secondary-button">Buscar</button>
+        </div>
+        <select id="atendimentoProfissionalId" name="profissionalId" required>
+          <option value="">Busque e selecione um dentista</option>
+        </select>
+
+        <div class="form-grid-2">
+          <div>
+            <label for="atendimentoData">Data</label>
+            <input id="atendimentoData" name="data" type="date" required />
+          </div>
+          <div>
+            <label for="atendimentoHora">Horario</label>
+            <input id="atendimentoHora" name="hora" type="time" required />
+          </div>
+        </div>
+
+        <label for="atendimentoObservacoes">Observacoes</label>
+        <textarea id="atendimentoObservacoes" name="observacoes" rows="4"></textarea>
+
+        <div class="form-actions">
+          <button id="salvarAtendimentoButton" type="submit" class="primary-button">Agendar</button>
+          <button id="limparAtendimentoButton" type="button" class="secondary-button">Limpar</button>
+        </div>
+        <p id="atendimentoMessage" class="message" role="status"></p>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Atendimentos</p>
+          <h3>Agenda</h3>
+        </div>
+        <button id="recarregarAtendimentosButton" type="button" class="secondary-button">Atualizar</button>
+      </div>
+
+      <form id="atendimentoFiltroForm" class="filters-bar">
+        <input id="filtroAtendimentoData" name="data" type="date" aria-label="Filtrar por data" />
+        <select id="filtroAtendimentoStatus" name="status" aria-label="Filtrar por status">
+          <option value="">Todos os status</option>
+          <option value="AGENDADO">Agendado</option>
+          <option value="CONFIRMADO">Confirmado</option>
+          <option value="REALIZADO">Realizado</option>
+          <option value="CANCELADO">Cancelado</option>
+          <option value="NAO_COMPARECEU">Nao compareceu</option>
+        </select>
+        <button type="submit" class="secondary-button">Filtrar</button>
+      </form>
+
+      <div class="table-wrap">
+        <table class="data-table agenda-table">
+          <thead>
+          <tr>
+            <th>Data</th>
+            <th>Horario</th>
+            <th>Paciente</th>
+            <th>Dentista</th>
+            <th>Status</th>
+            <th>Observacoes</th>
+          </tr>
+          </thead>
+          <tbody id="atendimentosTabela">
+          <tr>
+            <td colspan="6">Carregando...</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
 </template>
 
 <template id="pagina-pacientes">

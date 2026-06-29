@@ -1,10 +1,11 @@
 import { initPacientesPage } from "./pages/pacientes.js";
 import { initProfissionaisPage } from "./pages/profissionais.js";
+import { initAtendimentosPage } from "./pages/atendimentos.js";
 
 const pageTitles = {
   inicio: "Inicio",
   profissionais: "Profissionais",
-  consultas: "Consultas",
+  atendimentos: "Atendimentos",
   pacientes: "Pacientes",
   configuracoes: "Configuracoes",
 };
@@ -30,6 +31,10 @@ export const renderPage = (page) => {
 
   if (page === "pacientes") {
     initPacientesPage();
+  }
+
+  if (page === "atendimentos") {
+    initAtendimentosPage();
   }
 };
 

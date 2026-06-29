@@ -56,6 +56,24 @@ services:
       retries: 10
       start_period: 30s
 
+  mysql-atendimento:
+    image: mysql:8.0
+    container_name: clinica-mysql-atendimento
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_atendimento
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_atendimento_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
   config-server:
     build: ./config-server
     container_name: config-server
@@ -164,6 +182,38 @@ services:
     networks:
       - clinica-net
 
+  servico-atendimento:
+    build: ./servico-atendimento
+    container_name: clinica-atendimento
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_ATENDIMENTO_URL: jdbc:mysql://clinica-mysql-atendimento:3306/clinica_atendimento
+      SPRING_DATASOURCE_ATENDIMENTO_USERNAME: root
+      SPRING_DATASOURCE_ATENDIMENTO_PASSWORD: root
+      SERVICO_PACIENTE_URL: http://servico-paciente:8083
+      SERVICO_PROFISSIONAL_URL: http://servico-profissional:8082
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/atendimentos/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      mysql-atendimento:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      servico-paciente:
+        condition: service_started
+      servico-profissional:
+        condition: service_started
+    networks:
+      - clinica-net
   frontend-autenticacao:
     build: ./frontend-autenticacao
     container_name: clinica-auth-frontend
@@ -176,6 +226,8 @@ services:
         condition: service_started
       servico-paciente:
         condition: service_started
+      servico-atendimento:
+        condition: service_healthy
     networks:
       - clinica-net
 
@@ -183,6 +235,8 @@ volumes:
   mysql_data:
   mysql_profissional_data:
   mysql_paciente_data:
+
+  mysql_atendimento_data:
 
 networks:
   clinica-net:
