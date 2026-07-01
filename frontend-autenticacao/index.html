@@ -258,6 +258,35 @@
         <button type="submit" class="secondary-button">Filtrar</button>
       </form>
 
+      <section id="realizacaoAtendimentoPanel" class="inline-editor" hidden>
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="eyebrow">Execucao</p>
+            <h3 id="realizacaoAtendimentoTitulo">Realizar atendimento</h3>
+          </div>
+          <button id="fecharRealizacaoAtendimentoButton" type="button" class="secondary-button">Fechar</button>
+        </div>
+
+        <form id="realizacaoAtendimentoForm" class="data-form">
+          <input id="realizacaoAtendimentoId" name="id" type="hidden" />
+
+          <label for="realizacaoProcedimento">Procedimento realizado</label>
+          <input id="realizacaoProcedimento" name="procedimentoRealizado" type="text" maxlength="255" required />
+
+          <label for="realizacaoObservacoes">Observacoes</label>
+          <textarea id="realizacaoObservacoes" name="observacoes" rows="3"></textarea>
+
+          <label for="realizacaoValor">Valor</label>
+          <input id="realizacaoValor" name="valor" type="number" min="0" step="0.01" />
+
+          <div class="form-actions">
+            <button id="salvarRealizacaoButton" type="submit" class="primary-button">Realizar</button>
+            <button id="cancelarRealizacaoButton" type="button" class="secondary-button">Cancelar</button>
+          </div>
+          <p id="realizacaoAtendimentoMessage" class="message" role="status"></p>
+        </form>
+      </section>
+
       <div class="table-wrap">
         <table class="data-table agenda-table">
           <thead>
@@ -268,11 +297,12 @@
             <th>Dentista</th>
             <th>Status</th>
             <th>Observacoes</th>
+            <th>Acoes</th>
           </tr>
           </thead>
           <tbody id="atendimentosTabela">
           <tr>
-            <td colspan="6">Carregando...</td>
+            <td colspan="7">Carregando...</td>
           </tr>
           </tbody>
         </table>

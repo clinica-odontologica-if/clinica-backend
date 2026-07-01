@@ -679,3 +679,40 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.inline-editor {
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.compact-heading {
+  margin-bottom: 14px;
+}
+
+.inline-editor .data-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.inline-editor label,
+.inline-editor input,
+.inline-editor textarea,
+.inline-editor .form-actions,
+.inline-editor .message {
+  grid-column: auto;
+}
+
+.inline-editor textarea,
+.inline-editor .form-actions,
+.inline-editor .message {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 860px) {
+  .inline-editor .data-form {
+    grid-template-columns: 1fr;
+  }
+}
