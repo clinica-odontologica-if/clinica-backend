@@ -6,6 +6,24 @@ import { escapeHtml } from "../utils.js";
 const canManageEstoque = () => hasAnyRole("GERENTE", "AUXILIAR");
 const canInativarMaterial = () => hasAnyRole("GERENTE");
 
+const CATEGORIAS_PADRAO = [
+  "Anestesia",
+  "Antissepticos",
+  "Cirurgicos",
+  "Consumo clinico",
+  "Descartaveis",
+  "Endodontia",
+  "Equipamentos",
+  "Esterilizacao",
+  "Higiene",
+  "Medicamentos",
+  "Ortodontia",
+  "Radiologia",
+  "Restauradores",
+];
+
+let categoriasConhecidas = [...CATEGORIAS_PADRAO];
+
 const fetchJson = async (url, options = {}, fallbackMessage) => {
   const response = await fetch(url, options);
   const data = await parseResponse(response);
@@ -15,13 +33,60 @@ const fetchJson = async (url, options = {}, fallbackMessage) => {
 
 const formatNumero = (valor) => Number(valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
+const normalizarCategoria = (categoria) => String(categoria || "").trim();
+
+const ordenarCategorias = (categorias) => [...new Set(categorias.map(normalizarCategoria).filter(Boolean))]
+  .sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+const atualizarCategoriasConhecidas = (materiais = []) => {
+  const categoriasDosMateriais = materiais.map((material) => material.categoria);
+  categoriasConhecidas = ordenarCategorias([...CATEGORIAS_PADRAO, ...categoriasDosMateriais]);
+  renderCategoriaControls();
+};
+
+const renderCategoriaControls = () => {
+  const categoriaSelect = document.querySelector("#materialCategoria");
+  const filtroSelect = document.querySelector("#filtroMaterialCategoria");
+  const categoriaAtual = categoriaSelect?.value || "";
+  const filtroAtual = filtroSelect?.value || "";
+  const categoriaOptions = categoriasConhecidas
+    .map((categoria) => `<option value="${escapeHtml(categoria)}">${escapeHtml(categoria)}</option>`)
+    .join("");
+
+  if (categoriaSelect) {
+    categoriaSelect.innerHTML = '<option value="">Selecione uma categoria</option>' + categoriaOptions + '<option value="__nova__">Adicionar nova categoria</option>';
+    categoriaSelect.value = categoriasConhecidas.includes(categoriaAtual) || categoriaAtual === "__nova__" ? categoriaAtual : "";
+  }
+
+  if (filtroSelect) {
+    filtroSelect.innerHTML = '<option value="">Todas as categorias</option>' + categoriaOptions;
+    filtroSelect.value = categoriasConhecidas.includes(filtroAtual) ? filtroAtual : "";
+  }
+};
+
+const toggleCategoriaOutra = () => {
+  const categoriaSelect = document.querySelector("#materialCategoria");
+  const categoriaOutra = document.querySelector("#materialCategoriaOutra");
+  if (!categoriaSelect || !categoriaOutra) return;
+  const novaCategoria = categoriaSelect.value === "__nova__";
+  categoriaOutra.hidden = !novaCategoria;
+  categoriaOutra.required = novaCategoria;
+  if (!novaCategoria) categoriaOutra.value = "";
+};
+
+const resolverCategoriaSelecionada = (formData) => {
+  const categoria = normalizarCategoria(formData.get("categoria"));
+  if (categoria === "__nova__") return normalizarCategoria(formData.get("categoriaOutra")) || null;
+  return categoria || null;
+};
+
 const materialPayloadFromForm = (form) => {
   const formData = new FormData(form);
   const quantidadeAtual = formData.get("quantidadeAtual");
   return {
     nome: formData.get("nome"),
     descricao: formData.get("descricao") || null,
-    categoria: formData.get("categoria") || null,
+    categoria: resolverCategoriaSelecionada(formData),
     unidadeMedida: formData.get("unidadeMedida"),
     quantidadeAtual: quantidadeAtual === "" ? 0 : Number(quantidadeAtual),
     quantidadeMinima: Number(formData.get("quantidadeMinima") || 0),
@@ -51,6 +116,7 @@ const renderMateriais = (materiais) => {
 
   if (!materiais.length) {
     tbody.innerHTML = '<tr><td colspan="6">Nenhum material cadastrado.</td></tr>';
+    atualizarCategoriasConhecidas([]);
     renderMaterialOptions([]);
     return;
   }
@@ -77,6 +143,7 @@ const renderMateriais = (materiais) => {
     `;
   }).join("");
 
+  atualizarCategoriasConhecidas(materiais);
   renderMaterialOptions(materiais);
 };
 
@@ -121,6 +188,8 @@ const limparMaterialForm = () => {
   if (!form) return;
   form.reset();
   document.querySelector("#materialId").value = "";
+  renderCategoriaControls();
+  toggleCategoriaOutra();
   document.querySelector("#materialFormTitulo").textContent = "Cadastrar material";
   document.querySelector("#salvarMaterialButton").textContent = "Salvar";
   document.querySelector("#cancelarEdicaoMaterialButton").hidden = true;
@@ -130,7 +199,22 @@ const preencherMaterialForm = (material) => {
   document.querySelector("#materialId").value = material.id || "";
   document.querySelector("#materialNome").value = material.nome || "";
   document.querySelector("#materialDescricao").value = material.descricao || "";
-  document.querySelector("#materialCategoria").value = material.categoria || "";
+  const categoriaSelect = document.querySelector("#materialCategoria");
+  const categoriaOutra = document.querySelector("#materialCategoriaOutra");
+  const categoria = normalizarCategoria(material.categoria);
+  if (categoria && !categoriasConhecidas.includes(categoria)) {
+    categoriasConhecidas = ordenarCategorias([...categoriasConhecidas, categoria]);
+    renderCategoriaControls();
+  }
+  if (categoria && categoriasConhecidas.includes(categoria)) {
+    categoriaSelect.value = categoria;
+  } else if (categoria) {
+    categoriaSelect.value = "__nova__";
+    categoriaOutra.value = categoria;
+  } else {
+    categoriaSelect.value = "";
+  }
+  toggleCategoriaOutra();
   document.querySelector("#materialUnidadeMedida").value = material.unidadeMedida || "UNIDADE";
   document.querySelector("#materialQuantidadeAtual").value = material.quantidadeAtual ?? 0;
   document.querySelector("#materialQuantidadeMinima").value = material.quantidadeMinima ?? 0;
@@ -236,6 +320,8 @@ export const initEstoquePage = () => {
   }
 
   materialForm.dataset.ready = "true";
+  renderCategoriaControls();
+  document.querySelector("#materialCategoria").addEventListener("change", toggleCategoriaOutra);
   materialForm.addEventListener("submit", salvarMaterial);
   movimentacaoForm.addEventListener("submit", registrarMovimentacao);
   tabela.addEventListener("click", handleMaterialAction);

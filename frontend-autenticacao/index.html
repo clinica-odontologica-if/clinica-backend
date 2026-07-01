@@ -413,7 +413,8 @@
         <div class="form-grid-2">
           <div>
             <label for="materialCategoria">Categoria</label>
-            <input id="materialCategoria" name="categoria" type="text" />
+            <select id="materialCategoria" name="categoria"></select>
+            <input id="materialCategoriaOutra" name="categoriaOutra" type="text" placeholder="Nova categoria" hidden />
           </div>
           <div>
             <label for="materialUnidadeMedida">Unidade</label>
@@ -479,7 +480,7 @@
     </div>
     <form id="materialFiltroForm" class="filters-bar estoque-filters">
       <input id="filtroMaterialBusca" name="busca" type="search" placeholder="Buscar material" aria-label="Buscar material" />
-      <input id="filtroMaterialCategoria" name="categoria" type="search" placeholder="Categoria" aria-label="Categoria" />
+      <select id="filtroMaterialCategoria" name="categoria" aria-label="Categoria"></select>
       <select id="filtroMaterialBaixoEstoque" name="baixoEstoque" aria-label="Baixo estoque">
         <option value="">Todos</option>
         <option value="true">Baixo estoque</option>
