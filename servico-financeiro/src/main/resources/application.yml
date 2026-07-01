@@ -39,3 +39,7 @@ eureka:
 
 jwt:
   secret: ${JWT_SECRET:desenvolvimento-local-chave-minima-32-chars}
+
+servico:
+  atendimento:
+    url: ${SERVICO_ATENDIMENTO_URL:http://localhost:8084}

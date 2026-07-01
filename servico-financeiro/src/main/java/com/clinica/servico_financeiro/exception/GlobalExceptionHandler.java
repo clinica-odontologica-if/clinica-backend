@@ -30,6 +30,14 @@ public class GlobalExceptionHandler {
         );
     }
 
+
+    @ExceptionHandler(ServicoIndisponivelException.class)
+    public ResponseEntity<ErroResponse> handleServicoIndisponivel(
+            ServicoIndisponivelException ex, HttpServletRequest request) {
+        return ResponseEntity.status(503).body(
+                new ErroResponse(503, "Servico indisponivel", ex.getMessage(), request.getRequestURI())
+        );
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResponse> handleValidacao(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
