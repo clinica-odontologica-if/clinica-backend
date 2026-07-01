@@ -1,11 +1,15 @@
 import { initPacientesPage } from "./pages/pacientes.js";
 import { initProfissionaisPage } from "./pages/profissionais.js";
 import { initAtendimentosPage } from "./pages/atendimentos.js";
+import { initEstoquePage } from "./pages/estoque.js";
+import { initFinanceiroPage } from "./pages/financeiro.js";
 
 const pageTitles = {
   inicio: "Inicio",
   profissionais: "Profissionais",
   atendimentos: "Atendimentos",
+  estoque: "Estoque",
+  financeiro: "Financeiro",
   pacientes: "Pacientes",
   configuracoes: "Configuracoes",
 };
@@ -35,6 +39,14 @@ export const renderPage = (page) => {
 
   if (page === "atendimentos") {
     initAtendimentosPage();
+  }
+
+  if (page === "estoque") {
+    initEstoquePage();
+  }
+
+  if (page === "financeiro") {
+    initFinanceiroPage();
   }
 };
 
