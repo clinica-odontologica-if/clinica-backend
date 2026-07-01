@@ -24,7 +24,15 @@ public class ProfissionalService {
     private final AutenticacaoClientService autenticacaoClientService;
 
     public List<ProfissionalResponse> listarAtivos() {
-        return profissionalRepository.findByAtivoTrue()
+        return listarAtivos(null, null, null);
+    }
+
+    public List<ProfissionalResponse> listarAtivos(String busca, String especialidade, Role role) {
+        return profissionalRepository.buscarAtivosComFiltros(
+                        normalizarFiltro(busca),
+                        normalizarFiltro(especialidade),
+                        role
+                )
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -34,6 +42,16 @@ public class ProfissionalService {
         Profissional profissional = profissionalRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Profissional com id " + id + " não encontrado"
+                ));
+        return toResponse(profissional);
+    }
+
+    public ProfissionalResponse buscarPorEmail(String email) {
+        String emailNormalizado = normalizarEmail(email);
+        Profissional profissional = profissionalRepository.findByEmail(emailNormalizado)
+                .filter(Profissional::isAtivo)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Profissional com email " + emailNormalizado + " nao encontrado"
                 ));
         return toResponse(profissional);
     }
@@ -138,6 +156,14 @@ public class ProfissionalService {
 
     private String normalizarEmail(String email) {
         return email.trim().toLowerCase();
+    }
+
+    private String normalizarFiltro(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        String texto = valor.trim().toLowerCase();
+        return texto.isBlank() ? null : texto;
     }
 
     private String gerarSenhaInicial(String nome) {

@@ -21,7 +21,15 @@ public class PacienteService {
 
     @Transactional(readOnly = true)
     public List<PacienteResponse> listarAtivos() {
-        return pacienteRepository.findByAtivoTrue()
+        return listarAtivos(null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PacienteResponse> listarAtivos(String busca, String cpf) {
+        return pacienteRepository.buscarAtivosComFiltros(
+                        normalizarFiltroTexto(busca),
+                        normalizarFiltroCpf(cpf)
+                )
                 .stream()
                 .map(PacienteResponse::from)
                 .toList();
@@ -128,6 +136,11 @@ public class PacienteService {
         return somenteDigitos(cpf);
     }
 
+    private String normalizarFiltroCpf(String cpf) {
+        String valor = somenteDigitos(cpf);
+        return valor.isBlank() ? null : valor;
+    }
+
     private String normalizarTelefone(String telefone) {
         return somenteDigitos(telefone);
     }
@@ -142,6 +155,11 @@ public class PacienteService {
     private String normalizarEmail(String email) {
         String valor = normalizarTextoOpcional(email);
         return valor == null ? null : valor.toLowerCase();
+    }
+
+    private String normalizarFiltroTexto(String valor) {
+        String texto = normalizarTextoOpcional(valor);
+        return texto == null ? null : texto.toLowerCase();
     }
 
     private String normalizarTextoObrigatorio(String valor, String mensagem) {

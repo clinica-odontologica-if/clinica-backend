@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Year;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +38,56 @@ class ProfissionalServiceTest {
 
     @InjectMocks
     private ProfissionalService profissionalService;
+
+    @Test
+    @DisplayName("deve listar profissionais ativos aplicando filtros")
+    void deveListarProfissionaisAtivosAplicandoFiltros() {
+        Profissional profissional = new Profissional(
+                1L,
+                "Ana Souza",
+                "ana@clinica.com",
+                "CRO-MG123",
+                "Ortodontia",
+                Role.DENTISTA,
+                true,
+                null
+        );
+
+        when(profissionalRepository.buscarAtivosComFiltros("ana", "orto", Role.DENTISTA))
+                .thenReturn(List.of(profissional));
+
+        List<ProfissionalResponse> response = profissionalService.listarAtivos(
+                " Ana ",
+                " Orto ",
+                Role.DENTISTA
+        );
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).getNome()).isEqualTo("Ana Souza");
+        verify(profissionalRepository).buscarAtivosComFiltros("ana", "orto", Role.DENTISTA);
+    }
+
+    @Test
+    @DisplayName("deve buscar profissional ativo por email")
+    void deveBuscarProfissionalAtivoPorEmail() {
+        Profissional profissional = new Profissional(
+                7L,
+                "Dra Maria",
+                "maria@clinica.com",
+                "CRO-MG777",
+                "Endodontia",
+                Role.DENTISTA,
+                true,
+                null
+        );
+
+        when(profissionalRepository.findByEmail("maria@clinica.com")).thenReturn(Optional.of(profissional));
+
+        ProfissionalResponse response = profissionalService.buscarPorEmail(" MARIA@CLINICA.COM ");
+
+        assertThat(response.getId()).isEqualTo(7L);
+        assertThat(response.getEmail()).isEqualTo("maria@clinica.com");
+    }
 
     @Test
     @DisplayName("deve cadastrar dentista criando usuario interno antes de salvar")

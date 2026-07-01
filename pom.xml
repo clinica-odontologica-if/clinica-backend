@@ -13,6 +13,7 @@
         <module>servico-autenticacao</module>
         <module>servico-profissional</module>
         <module>servico-paciente</module>
+        <module>servico-atendimento</module>
         <module>config-server</module>
         <module>discovery-server</module>
         <module>tools/hash-generator</module>

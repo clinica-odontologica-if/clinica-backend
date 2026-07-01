@@ -23,9 +23,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProfissionalController.class)
@@ -47,6 +49,43 @@ class ProfissionalControllerTest {
     ProfissionalControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
+    }
+
+    @Test
+    @WithMockUser(roles = "ATENDENTE")
+    @DisplayName("deve listar profissionais com filtros")
+    void deveListarProfissionaisComFiltros() throws Exception {
+        mockMvc.perform(get("/profissionais")
+                        .param("busca", "ana")
+                        .param("especialidade", "orto")
+                        .param("role", "DENTISTA"))
+                .andExpect(status().isOk());
+
+        verify(profissionalService).listarAtivos("ana", "orto", Role.DENTISTA);
+    }
+
+    @Test
+    @WithMockUser(username = "dentista@clinica.com", roles = "DENTISTA")
+    @DisplayName("deve buscar perfil profissional do usuario autenticado")
+    void deveBuscarPerfilProfissionalDoUsuarioAutenticado() throws Exception {
+        ProfissionalResponse response = new ProfissionalResponse(
+                8L,
+                "Dra Ana",
+                "dentista@clinica.com",
+                "CRO-MG888",
+                "Endodontia",
+                Role.DENTISTA,
+                true
+        );
+
+        when(profissionalService.buscarPorEmail("dentista@clinica.com")).thenReturn(response);
+
+        mockMvc.perform(get("/profissionais/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(8L))
+                .andExpect(jsonPath("$.email").value("dentista@clinica.com"));
+
+        verify(profissionalService).buscarPorEmail("dentista@clinica.com");
     }
 
     @Test
