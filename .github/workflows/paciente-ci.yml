@@ -1,17 +1,17 @@
-name: CI - Servico de Profissional
+name: CI - Servico de Paciente
 
 on:
   push:
     branches:
       - '**'
     paths:
-      - 'servico-profissional/**'
-      - '.github/workflows/profissional-ci.yml'
+      - 'servico-paciente/**'
+      - '.github/workflows/paciente-ci.yml'
   pull_request:
     branches: [ "main", "develop" ]
     paths:
-      - 'servico-profissional/**'
-      - '.github/workflows/profissional-ci.yml'
+      - 'servico-paciente/**'
+      - '.github/workflows/paciente-ci.yml'
 
 jobs:
   test:
@@ -19,7 +19,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./servico-profissional
+        working-directory: ./servico-paciente
 
     steps:
       - name: Checkout do codigo
@@ -32,5 +32,5 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Executar testes do servico de profissional
+      - name: Executar testes do servico de paciente
         run: mvn clean test
