@@ -2,9 +2,13 @@ package com.clinica.servico_estoque.controller;
 
 import com.clinica.servico_estoque.dto.MaterialRequest;
 import com.clinica.servico_estoque.dto.MaterialResponse;
+import com.clinica.servico_estoque.dto.MovimentacaoEstoqueRequest;
+import com.clinica.servico_estoque.dto.MovimentacaoEstoqueResponse;
+import com.clinica.servico_estoque.model.TipoMovimentacaoEstoque;
 import com.clinica.servico_estoque.model.UnidadeMedida;
 import com.clinica.servico_estoque.security.JwtUtil;
 import com.clinica.servico_estoque.service.MaterialService;
+import com.clinica.servico_estoque.service.MovimentacaoEstoqueService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +19,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +48,9 @@ class MaterialControllerTest {
 
     @MockitoBean
     private MaterialService materialService;
+
+    @MockitoBean
+    private MovimentacaoEstoqueService movimentacaoEstoqueService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
@@ -132,6 +140,46 @@ class MaterialControllerTest {
         verify(materialService, never()).inativar(any());
     }
 
+    @Test
+    @WithMockUser(roles = "AUXILIAR")
+    @DisplayName("deve registrar movimentacao para auxiliar")
+    void deveRegistrarMovimentacaoParaAuxiliar() throws Exception {
+        when(movimentacaoEstoqueService.registrar(eq(1L), any(MovimentacaoEstoqueRequest.class), any()))
+                .thenReturn(movimentacaoResponsePadrao());
+
+        mockMvc.perform(post("/materiais/1/movimentacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(movimentacaoRequestPadrao())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tipo").value("ENTRADA"))
+                .andExpect(jsonPath("$.saldoAtual").value(15));
+
+        verify(movimentacaoEstoqueService).registrar(eq(1L), any(MovimentacaoEstoqueRequest.class), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "GERENTE")
+    @DisplayName("deve listar movimentacoes para gerente")
+    void deveListarMovimentacoesParaGerente() throws Exception {
+        when(movimentacaoEstoqueService.listarPorMaterial(1L)).thenReturn(List.of(movimentacaoResponsePadrao()));
+
+        mockMvc.perform(get("/materiais/1/movimentacoes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].materialNome").value("Anestesico"));
+    }
+
+    @Test
+    @WithMockUser(roles = "DENTISTA")
+    @DisplayName("deve bloquear movimentacao para dentista")
+    void deveBloquearMovimentacaoParaDentista() throws Exception {
+        mockMvc.perform(post("/materiais/1/movimentacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(movimentacaoRequestPadrao())))
+                .andExpect(status().isForbidden());
+
+        verify(movimentacaoEstoqueService, never()).registrar(any(), any(), any());
+    }
+
     private MaterialRequest requestPadrao() {
         return new MaterialRequest(
                 "Anestesico",
@@ -156,6 +204,29 @@ class MaterialControllerTest {
                 true,
                 LocalDateTime.now(),
                 null
+        );
+    }
+
+    private MovimentacaoEstoqueRequest movimentacaoRequestPadrao() {
+        return new MovimentacaoEstoqueRequest(
+                TipoMovimentacaoEstoque.ENTRADA,
+                BigDecimal.valueOf(5),
+                "Compra"
+        );
+    }
+
+    private MovimentacaoEstoqueResponse movimentacaoResponsePadrao() {
+        return new MovimentacaoEstoqueResponse(
+                1L,
+                1L,
+                "Anestesico",
+                TipoMovimentacaoEstoque.ENTRADA,
+                BigDecimal.valueOf(5),
+                BigDecimal.TEN,
+                BigDecimal.valueOf(15),
+                "Compra",
+                "auxiliar@clinica.com",
+                LocalDateTime.now()
         );
     }
 

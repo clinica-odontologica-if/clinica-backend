@@ -2,12 +2,16 @@ package com.clinica.servico_estoque.controller;
 
 import com.clinica.servico_estoque.dto.MaterialRequest;
 import com.clinica.servico_estoque.dto.MaterialResponse;
+import com.clinica.servico_estoque.dto.MovimentacaoEstoqueRequest;
+import com.clinica.servico_estoque.dto.MovimentacaoEstoqueResponse;
 import com.clinica.servico_estoque.service.MaterialService;
+import com.clinica.servico_estoque.service.MovimentacaoEstoqueService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +30,7 @@ import java.util.List;
 public class MaterialController {
 
     private final MaterialService materialService;
+    private final MovimentacaoEstoqueService movimentacaoEstoqueService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('GERENTE', 'ATENDENTE', 'DENTISTA', 'AUXILIAR')")
@@ -70,5 +75,22 @@ public class MaterialController {
     public ResponseEntity<Void> inativar(@PathVariable Long id) {
         materialService.inativar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/movimentacoes")
+    @PreAuthorize("hasAnyRole('GERENTE', 'AUXILIAR')")
+    public ResponseEntity<MovimentacaoEstoqueResponse> registrarMovimentacao(
+            @PathVariable Long id,
+            @Valid @RequestBody MovimentacaoEstoqueRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(movimentacaoEstoqueService.registrar(id, request, authentication));
+    }
+
+    @GetMapping("/{id}/movimentacoes")
+    @PreAuthorize("hasAnyRole('GERENTE', 'AUXILIAR')")
+    public ResponseEntity<List<MovimentacaoEstoqueResponse>> listarMovimentacoes(@PathVariable Long id) {
+        return ResponseEntity.ok(movimentacaoEstoqueService.listarPorMaterial(id));
     }
 }
