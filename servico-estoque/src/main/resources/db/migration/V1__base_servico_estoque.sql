@@ -1,0 +1,2 @@
+-- Base inicial do servico-estoque.
+-- As tabelas de dominio serao criadas nos proximos blocos da Sprint 4.
