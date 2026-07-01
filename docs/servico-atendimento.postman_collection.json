@@ -69,7 +69,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"profissionalId\": {{profissionalId}},\n  \"data\": \"2099-01-10\",\n  \"hora\": \"09:00\",\n  \"observacoes\": \"Consulta inicial\"\n}"
+          "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"profissionalId\": {{profissionalId}},\n  \"data\": \"2099-01-10\",\n  \"hora\": \"09:00\",\n  \"duracaoMinutos\": 60,\n  \"observacoes\": \"Consulta inicial\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/atendimentos",

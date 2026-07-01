@@ -51,6 +51,9 @@ public class Atendimento {
     @Column(name = "hora_atendimento", nullable = false)
     private LocalTime horaAtendimento;
 
+    @Column(name = "duracao_minutos", nullable = false)
+    private Integer duracaoMinutos = 60;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private StatusAtendimento status = StatusAtendimento.AGENDADO;
@@ -80,6 +83,9 @@ public class Atendimento {
     public void prePersist() {
         if (criadoEm == null) {
             criadoEm = LocalDateTime.now();
+        }
+        if (duracaoMinutos == null) {
+            duracaoMinutos = 60;
         }
     }
 

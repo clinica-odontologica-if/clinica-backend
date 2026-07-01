@@ -94,6 +94,7 @@ const atendimentoPayloadFromForm = (form) => {
     profissionalId: Number(formData.get("profissionalId")),
     data: formData.get("data"),
     hora: formData.get("hora"),
+    duracaoMinutos: Number(formData.get("duracaoMinutos")) || 60,
     observacoes: formData.get("observacoes") || null,
   };
 };
@@ -125,6 +126,8 @@ const limparAtendimentoForm = () => {
   form.reset();
   document.querySelector("#atendimentoPacienteId").innerHTML = '<option value="">Busque e selecione um paciente</option>';
   document.querySelector("#atendimentoProfissionalId").innerHTML = '<option value="">Busque e selecione um dentista</option>';
+  const duracaoInput = document.querySelector("#atendimentoDuracaoMinutos");
+  if (duracaoInput) duracaoInput.value = "60";
   preencherDataPadrao();
 };
 
@@ -159,7 +162,7 @@ const renderAtendimentos = (atendimentos) => {
   if (!tbody) return;
 
   if (!atendimentos.length) {
-    tbody.innerHTML = '<tr><td colspan="7">Nenhum atendimento encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Nenhum atendimento encontrado.</td></tr>';
     return;
   }
 
@@ -172,6 +175,7 @@ const renderAtendimentos = (atendimentos) => {
         <tr>
           <td>${escapeHtml(formatData(atendimento.data))}</td>
           <td>${escapeHtml(formatHora(atendimento.hora))}</td>
+          <td>${escapeHtml(`${atendimento.duracaoMinutos || 60} min`)}</td>
           <td>${escapeHtml(atendimento.pacienteNome || `Paciente #${atendimento.pacienteId || "-"}`)}</td>
           <td>${escapeHtml(atendimento.profissionalNome || `Profissional #${atendimento.profissionalId || "-"}`)}</td>
           <td><span class="status-badge status-${escapeHtml(status.toLowerCase())}">${escapeHtml(statusLabel)}</span></td>
@@ -190,7 +194,7 @@ const carregarAtendimentos = async () => {
 
   status.textContent = "carregando";
   status.className = "status-pill";
-  tbody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8">Carregando...</td></tr>';
 
   const params = new URLSearchParams();
   const data = document.querySelector("#filtroAtendimentoData")?.value;
@@ -209,7 +213,7 @@ const carregarAtendimentos = async () => {
     status.textContent = "online";
     status.className = "status-pill ok";
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
     status.textContent = "erro";
     status.className = "status-pill offline";
   }

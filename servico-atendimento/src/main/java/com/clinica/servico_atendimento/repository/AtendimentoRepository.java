@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +15,19 @@ public interface AtendimentoRepository extends JpaRepository<Atendimento, Long> 
 
     Optional<Atendimento> findByIdAndAtivoTrue(Long id);
 
-    boolean existsByProfissionalIdAndDataAtendimentoAndHoraAtendimentoAndStatusInAndAtivoTrue(
-            Long profissionalId,
-            LocalDate dataAtendimento,
-            LocalTime horaAtendimento,
-            Collection<StatusAtendimento> status
-    );
+    @Query("""
+            SELECT a
+            FROM Atendimento a
+            WHERE a.ativo = true
+              AND a.dataAtendimento = :data
+              AND a.status IN :status
+              AND (a.pacienteId = :pacienteId OR a.profissionalId = :profissionalId)
+            ORDER BY a.horaAtendimento ASC
+            """)
+    List<Atendimento> buscarAtendimentosQueOcupamAgenda(@Param("pacienteId") Long pacienteId,
+                                                         @Param("profissionalId") Long profissionalId,
+                                                         @Param("data") LocalDate data,
+                                                         @Param("status") Collection<StatusAtendimento> status);
 
     @Query("""
             SELECT a

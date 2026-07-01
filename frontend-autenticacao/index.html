@@ -214,7 +214,7 @@
           <option value="">Busque e selecione um dentista</option>
         </select>
 
-        <div class="form-grid-2">
+        <div class="form-grid-3">
           <div>
             <label for="atendimentoData">Data</label>
             <input id="atendimentoData" name="data" type="date" required />
@@ -222,6 +222,10 @@
           <div>
             <label for="atendimentoHora">Horario</label>
             <input id="atendimentoHora" name="hora" type="time" required />
+          </div>
+          <div>
+            <label for="atendimentoDuracaoMinutos">Duracao (min)</label>
+            <input id="atendimentoDuracaoMinutos" name="duracaoMinutos" type="number" min="15" max="480" step="15" value="60" required />
           </div>
         </div>
 
@@ -293,6 +297,7 @@
           <tr>
             <th>Data</th>
             <th>Horario</th>
+            <th>Duracao</th>
             <th>Paciente</th>
             <th>Dentista</th>
             <th>Status</th>
@@ -302,7 +307,7 @@
           </thead>
           <tbody id="atendimentosTabela">
           <tr>
-            <td colspan="7">Carregando...</td>
+            <td colspan="8">Carregando...</td>
           </tr>
           </tbody>
         </table>

@@ -52,6 +52,7 @@ Corpo:
   "profissionalId": 2,
   "data": "2099-01-10",
   "hora": "09:00",
+  "duracaoMinutos": 60,
   "observacoes": "Consulta inicial"
 }
 ```
@@ -60,7 +61,11 @@ Regras:
 
 - O paciente precisa existir e estar ativo no `servico-paciente`.
 - O profissional precisa existir, estar ativo e ter perfil `DENTISTA` no `servico-profissional`.
-- O profissional nao pode ter outro atendimento `AGENDADO` ou `CONFIRMADO` na mesma data e horario.
+- `duracaoMinutos` e opcional; quando nao informado, o sistema usa 60 minutos.
+- A duracao aceita vai de 15 a 480 minutos.
+- O atendimento deve terminar no mesmo dia.
+- O paciente nao pode ter outro atendimento `AGENDADO` ou `CONFIRMADO` que sobreponha o mesmo intervalo de horario.
+- O profissional nao pode ter outro atendimento `AGENDADO` ou `CONFIRMADO` que sobreponha o mesmo intervalo de horario.
 
 Resposta: `201 Created`
 
@@ -81,7 +86,7 @@ Filtros opcionais:
 | `data` | `/atendimentos?data=2099-01-10` |
 | `status` | `/atendimentos?status=AGENDADO` |
 
-Observacao: quando o usuario logado for `DENTISTA`, o filtro de profissional e forçado para o proprio profissional autenticado.
+Observacao: quando o usuario logado for `DENTISTA`, o filtro de profissional e forcado para o proprio profissional autenticado.
 
 ## Buscar por ID
 
@@ -173,6 +178,7 @@ Resposta de atendimento:
   "profissionalEmail": "joao@clinica.com",
   "data": "2099-01-10",
   "hora": "09:00:00",
+  "duracaoMinutos": 60,
   "status": "AGENDADO",
   "observacoes": "Consulta inicial",
   "procedimentoRealizado": null,
@@ -190,7 +196,7 @@ Resposta de erro:
 {
   "status": 400,
   "erro": "Regra de negocio violada",
-  "mensagem": "Profissional ja possui atendimento agendado nesse horario",
+  "mensagem": "Profissional ja possui atendimento nesse intervalo de horario",
   "caminho": "/atendimentos"
 }
 ```

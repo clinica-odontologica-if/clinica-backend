@@ -114,8 +114,8 @@ class AtendimentoFluxoIntegrationTest {
     }
 
     @Test
-    @DisplayName("deve impedir conflito de horario no fluxo HTTP")
-    void deveImpedirConflitoDeHorarioNoFluxoHttp() throws Exception {
+    @DisplayName("deve impedir conflito de intervalo no fluxo HTTP")
+    void deveImpedirConflitoDeIntervaloNoFluxoHttp() throws Exception {
         criarAtendimento("2099-01-11", "10:00");
 
         mockMvc.perform(post("/atendimentos")
@@ -126,12 +126,13 @@ class AtendimentoFluxoIntegrationTest {
                                   "pacienteId": 1,
                                   "profissionalId": 2,
                                   "data": "2099-01-11",
-                                  "hora": "10:00",
+                                  "hora": "10:30",
+                                  "duracaoMinutos": 30,
                                   "observacoes": "Retorno"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem").value("Profissional ja possui atendimento agendado nesse horario"));
+                .andExpect(jsonPath("$.mensagem").value("Profissional ja possui atendimento nesse intervalo de horario"));
     }
 
     @Test
@@ -166,11 +167,13 @@ class AtendimentoFluxoIntegrationTest {
                                   "profissionalId": 2,
                                   "data": "%s",
                                   "hora": "%s",
+                                  "duracaoMinutos": 60,
                                   "observacoes": "Consulta inicial"
                                 }
                                 """.formatted(data, hora)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.duracaoMinutos").value(60))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

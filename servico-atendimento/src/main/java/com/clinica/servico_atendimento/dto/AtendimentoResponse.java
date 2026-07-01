@@ -24,8 +24,31 @@ public record AtendimentoResponse(
         boolean ativo,
         LocalDateTime criadoEm,
         LocalDateTime atualizadoEm,
-        LocalDateTime realizadoEm
+        LocalDateTime realizadoEm,
+        Integer duracaoMinutos
 ) {
+    public AtendimentoResponse(
+            Long id,
+            Long pacienteId,
+            String pacienteNome,
+            Long profissionalId,
+            String profissionalNome,
+            String profissionalEmail,
+            LocalDate data,
+            LocalTime hora,
+            StatusAtendimento status,
+            String observacoes,
+            String procedimentoRealizado,
+            BigDecimal valor,
+            boolean ativo,
+            LocalDateTime criadoEm,
+            LocalDateTime atualizadoEm,
+            LocalDateTime realizadoEm
+    ) {
+        this(id, pacienteId, pacienteNome, profissionalId, profissionalNome, profissionalEmail, data, hora, status,
+                observacoes, procedimentoRealizado, valor, ativo, criadoEm, atualizadoEm, realizadoEm, 60);
+    }
+
     public static AtendimentoResponse from(Atendimento atendimento) {
         return new AtendimentoResponse(
                 atendimento.getId(),
@@ -43,7 +66,8 @@ public record AtendimentoResponse(
                 atendimento.isAtivo(),
                 atendimento.getCriadoEm(),
                 atendimento.getAtualizadoEm(),
-                atendimento.getRealizadoEm()
+                atendimento.getRealizadoEm(),
+                atendimento.getDuracaoMinutos()
         );
     }
 }

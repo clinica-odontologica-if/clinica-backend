@@ -22,11 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AtendimentoService {
+
+    private static final int DURACAO_PADRAO_MINUTOS = 60;
 
     private static final List<StatusAtendimento> STATUS_QUE_BLOQUEIAM_HORARIO = List.of(
             StatusAtendimento.AGENDADO,
@@ -54,6 +57,7 @@ public class AtendimentoService {
         atendimento.setProfissionalEmail(profissional.email());
         atendimento.setDataAtendimento(dto.data());
         atendimento.setHoraAtendimento(dto.hora());
+        atendimento.setDuracaoMinutos(resolverDuracaoMinutos(dto.duracaoMinutos()));
         atendimento.setObservacoes(dto.observacoes());
         atendimento.setStatus(StatusAtendimento.AGENDADO);
         atendimento.setAtivo(true);
@@ -156,16 +160,53 @@ public class AtendimentoService {
     }
 
     private void validarConflitoDeHorario(AtendimentoRequest dto) {
-        boolean existeConflito = atendimentoRepository.existsByProfissionalIdAndDataAtendimentoAndHoraAtendimentoAndStatusInAndAtivoTrue(
+        LocalTime novoInicio = dto.hora();
+        LocalTime novoFim = calcularFim(novoInicio, resolverDuracaoMinutos(dto.duracaoMinutos()));
+
+        List<Atendimento> atendimentosDoMesmoPeriodo = atendimentoRepository.buscarAtendimentosQueOcupamAgenda(
+                dto.pacienteId(),
                 dto.profissionalId(),
                 dto.data(),
-                dto.hora(),
                 STATUS_QUE_BLOQUEIAM_HORARIO
         );
 
-        if (existeConflito) {
-            throw new RegraDeNegocioException("Profissional ja possui atendimento agendado nesse horario");
+        for (Atendimento atendimento : atendimentosDoMesmoPeriodo) {
+            LocalTime inicioExistente = atendimento.getHoraAtendimento();
+            LocalTime fimExistente = calcularFim(inicioExistente, resolverDuracaoMinutos(atendimento.getDuracaoMinutos()));
+
+            if (!intervalosSobrepostos(novoInicio, novoFim, inicioExistente, fimExistente)) {
+                continue;
+            }
+
+            if (atendimento.getProfissionalId().equals(dto.profissionalId())) {
+                throw new RegraDeNegocioException("Profissional ja possui atendimento nesse intervalo de horario");
+            }
+
+            if (atendimento.getPacienteId().equals(dto.pacienteId())) {
+                throw new RegraDeNegocioException("Paciente ja possui atendimento nesse intervalo de horario");
+            }
         }
+    }
+
+    private int resolverDuracaoMinutos(Integer duracaoMinutos) {
+        return duracaoMinutos != null ? duracaoMinutos : DURACAO_PADRAO_MINUTOS;
+    }
+
+    private LocalTime calcularFim(LocalTime inicio, int duracaoMinutos) {
+        LocalTime fim = inicio.plusMinutes(duracaoMinutos);
+        if (!fim.isAfter(inicio)) {
+            throw new RegraDeNegocioException("Horario e duracao do atendimento devem terminar no mesmo dia");
+        }
+        return fim;
+    }
+
+    private boolean intervalosSobrepostos(
+            LocalTime primeiroInicio,
+            LocalTime primeiroFim,
+            LocalTime segundoInicio,
+            LocalTime segundoFim
+    ) {
+        return primeiroInicio.isBefore(segundoFim) && segundoInicio.isBefore(primeiroFim);
     }
 
     private Long resolverFiltroProfissional(
