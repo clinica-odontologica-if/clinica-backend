@@ -21,20 +21,20 @@ class AtendimentoRepositoryTest {
     private AtendimentoRepository atendimentoRepository;
 
     @Test
-    @DisplayName("deve identificar conflito de horario para profissional")
-    void deveIdentificarConflitoDeHorarioParaProfissional() {
+    @DisplayName("deve buscar atendimentos que ocupam a agenda")
+    void deveBuscarAtendimentosQueOcupamAgenda() {
         Atendimento atendimento = atendimentoBase();
         atendimentoRepository.saveAndFlush(atendimento);
 
-        boolean existeConflito = atendimentoRepository
-                .existsByProfissionalIdAndDataAtendimentoAndHoraAtendimentoAndStatusInAndAtivoTrue(
-                        2L,
-                        LocalDate.of(2026, 7, 10),
-                        LocalTime.of(14, 30),
-                        List.of(StatusAtendimento.AGENDADO, StatusAtendimento.CONFIRMADO)
-                );
+        List<Atendimento> encontrados = atendimentoRepository.buscarAtendimentosQueOcupamAgenda(
+                99L,
+                2L,
+                LocalDate.of(2026, 7, 10),
+                List.of(StatusAtendimento.AGENDADO, StatusAtendimento.CONFIRMADO)
+        );
 
-        assertThat(existeConflito).isTrue();
+        assertThat(encontrados).hasSize(1);
+        assertThat(encontrados.getFirst().getProfissionalId()).isEqualTo(2L);
     }
 
     @Test
@@ -47,11 +47,34 @@ class AtendimentoRepositoryTest {
                 1L,
                 2L,
                 LocalDate.of(2026, 7, 10),
-                StatusAtendimento.AGENDADO
+                null,
+                null,
+                StatusAtendimento.AGENDADO,
+                null
         );
 
         assertThat(encontrados).hasSize(1);
         assertThat(encontrados.get(0).getPacienteNome()).isEqualTo("Maria Silva");
+    }
+
+    @Test
+    @DisplayName("deve filtrar atendimentos por periodo e busca textual")
+    void deveFiltrarAtendimentosPorPeriodoEBuscaTextual() {
+        Atendimento atendimento = atendimentoBase();
+        atendimentoRepository.saveAndFlush(atendimento);
+
+        List<Atendimento> encontrados = atendimentoRepository.buscarAtivosComFiltros(
+                null,
+                null,
+                null,
+                LocalDate.of(2026, 7, 1),
+                LocalDate.of(2026, 7, 31),
+                null,
+                "ana"
+        );
+
+        assertThat(encontrados).hasSize(1);
+        assertThat(encontrados.getFirst().getProfissionalNome()).isEqualTo("Dra Ana");
     }
 
     private Atendimento atendimentoBase() {

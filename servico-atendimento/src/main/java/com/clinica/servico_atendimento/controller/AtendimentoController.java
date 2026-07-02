@@ -50,7 +50,10 @@ public class AtendimentoController {
             @RequestParam(required = false) Long pacienteId,
             @RequestParam(required = false) Long profissionalId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
             @RequestParam(required = false) StatusAtendimento status,
+            @RequestParam(required = false) String busca,
             Authentication authentication,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
     ) {
@@ -58,7 +61,10 @@ public class AtendimentoController {
                 pacienteId,
                 profissionalId,
                 data,
+                dataInicio,
+                dataFim,
                 status,
+                busca,
                 authentication,
                 authorizationHeader
         ));

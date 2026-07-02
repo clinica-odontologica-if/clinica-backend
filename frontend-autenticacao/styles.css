@@ -479,6 +479,7 @@ textarea:focus {
 }
 
 .form-grid-2,
+.form-grid-3,
 .lookup-row,
 .filters-bar {
   display: grid;
@@ -487,6 +488,10 @@ textarea:focus {
 
 .form-grid-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .lookup-row {
@@ -604,7 +609,7 @@ textarea:focus {
 }
 
 .agenda-table {
-  min-width: 760px;
+  min-width: 860px;
 }
 
 .status-badge {
@@ -674,8 +679,129 @@ textarea:focus {
   }
 
   .form-grid-2,
+  .form-grid-3,
   .lookup-row,
   .filters-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inline-editor {
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.compact-heading {
+  margin-bottom: 14px;
+}
+
+.inline-editor .data-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.inline-editor label,
+.inline-editor input,
+.inline-editor textarea,
+.inline-editor .form-actions,
+.inline-editor .message {
+  grid-column: auto;
+}
+
+.inline-editor textarea,
+.inline-editor .form-actions,
+.inline-editor .message {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 860px) {
+  .inline-editor .data-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.finance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.financeiro-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.financeiro-columns h3 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.form-actions.single-action {
+  grid-template-columns: 1fr;
+}
+
+.estoque-filters {
+  grid-template-columns: minmax(160px, 1fr) minmax(140px, 220px) minmax(140px, 180px) auto;
+}
+
+.financeiro-filters {
+  grid-template-columns: minmax(160px, 220px) minmax(160px, 220px) auto;
+}
+
+.estoque-table {
+  min-width: 760px;
+}
+
+.financeiro-table {
+  min-width: 680px;
+}
+
+@media (max-width: 860px) {
+  .finance-summary,
+  .financeiro-columns,
+  .estoque-filters,
+  .financeiro-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lookup-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.pagamento-filters {
+  grid-template-columns: minmax(160px, 1fr) minmax(130px, 170px) minmax(130px, 170px) minmax(130px, 170px) auto;
+}
+
+.selected-record {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8fbff;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pagamento-atendimentos-table {
+  min-width: 760px;
+}
+
+.data-table small {
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .pagamento-filters {
     grid-template-columns: 1fr;
   }
 }

@@ -58,9 +58,8 @@ class AtendimentoServiceTest {
         AtendimentoRequest request = requestPadrao();
         when(pacienteClient.buscarPorId(1L, "Bearer token")).thenReturn(pacienteAtivo());
         when(profissionalClient.buscarPorId(2L, "Bearer token")).thenReturn(dentistaAtivo(2L));
-        when(atendimentoRepository.existsByProfissionalIdAndDataAtendimentoAndHoraAtendimentoAndStatusInAndAtivoTrue(
-                eq(2L), eq(request.data()), eq(request.hora()), any()
-        )).thenReturn(false);
+        when(atendimentoRepository.buscarAtendimentosQueOcupamAgenda(eq(1L), eq(2L), eq(request.data()), any()))
+                .thenReturn(List.of());
         when(atendimentoRepository.save(any(Atendimento.class))).thenAnswer(invocation -> {
             Atendimento atendimento = invocation.getArgument(0);
             atendimento.setId(10L);
@@ -73,25 +72,95 @@ class AtendimentoServiceTest {
         assertThat(response.pacienteNome()).isEqualTo("Maria Silva");
         assertThat(response.profissionalNome()).isEqualTo("Dr Joao");
         assertThat(response.status()).isEqualTo(StatusAtendimento.AGENDADO);
+        assertThat(response.duracaoMinutos()).isEqualTo(45);
 
         ArgumentCaptor<Atendimento> captor = ArgumentCaptor.forClass(Atendimento.class);
         verify(atendimentoRepository).save(captor.capture());
         assertThat(captor.getValue().getProfissionalEmail()).isEqualTo("joao@clinica.com");
+        assertThat(captor.getValue().getDuracaoMinutos()).isEqualTo(45);
     }
 
     @Test
-    @DisplayName("deve bloquear cadastro quando existe conflito de horario")
-    void deveBloquearConflitoDeHorario() {
-        AtendimentoRequest request = requestPadrao();
+    @DisplayName("deve usar duracao padrao quando nao informada")
+    void deveUsarDuracaoPadraoQuandoNaoInformada() {
+        AtendimentoRequest request = new AtendimentoRequest(
+                1L,
+                2L,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(9, 0),
+                null,
+                "Consulta inicial"
+        );
         when(pacienteClient.buscarPorId(1L, "Bearer token")).thenReturn(pacienteAtivo());
         when(profissionalClient.buscarPorId(2L, "Bearer token")).thenReturn(dentistaAtivo(2L));
-        when(atendimentoRepository.existsByProfissionalIdAndDataAtendimentoAndHoraAtendimentoAndStatusInAndAtivoTrue(
-                eq(2L), eq(request.data()), eq(request.hora()), any()
-        )).thenReturn(true);
+        when(atendimentoRepository.buscarAtendimentosQueOcupamAgenda(eq(1L), eq(2L), eq(request.data()), any()))
+                .thenReturn(List.of());
+        when(atendimentoRepository.save(any(Atendimento.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AtendimentoResponse response = atendimentoService.cadastrar(request, "Bearer token");
+
+        assertThat(response.duracaoMinutos()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("deve bloquear cadastro quando dentista ja possui atendimento no intervalo")
+    void deveBloquearConflitoDeHorarioDoDentista() {
+        AtendimentoRequest request = new AtendimentoRequest(
+                1L,
+                2L,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(9, 30),
+                30,
+                "Retorno"
+        );
+        when(pacienteClient.buscarPorId(1L, "Bearer token")).thenReturn(pacienteAtivo());
+        when(profissionalClient.buscarPorId(2L, "Bearer token")).thenReturn(dentistaAtivo(2L));
+        when(atendimentoRepository.buscarAtendimentosQueOcupamAgenda(eq(1L), eq(2L), eq(request.data()), any()))
+                .thenReturn(List.of(atendimentoSalvo(2L, 99L, LocalTime.of(9, 0), 60)));
 
         assertThatThrownBy(() -> atendimentoService.cadastrar(request, "Bearer token"))
                 .isInstanceOf(RegraDeNegocioException.class)
-                .hasMessage("Profissional ja possui atendimento agendado nesse horario");
+                .hasMessage("Profissional ja possui atendimento nesse intervalo de horario");
+    }
+
+    @Test
+    @DisplayName("deve bloquear cadastro quando paciente ja possui atendimento no intervalo")
+    void deveBloquearConflitoDeHorarioDoPaciente() {
+        AtendimentoRequest request = new AtendimentoRequest(
+                1L,
+                2L,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(10, 15),
+                30,
+                "Retorno"
+        );
+        when(pacienteClient.buscarPorId(1L, "Bearer token")).thenReturn(pacienteAtivo());
+        when(profissionalClient.buscarPorId(2L, "Bearer token")).thenReturn(dentistaAtivo(2L));
+        when(atendimentoRepository.buscarAtendimentosQueOcupamAgenda(eq(1L), eq(2L), eq(request.data()), any()))
+                .thenReturn(List.of(atendimentoSalvo(99L, 1L, LocalTime.of(10, 0), 60)));
+
+        assertThatThrownBy(() -> atendimentoService.cadastrar(request, "Bearer token"))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Paciente ja possui atendimento nesse intervalo de horario");
+    }
+
+    @Test
+    @DisplayName("deve impedir atendimento que ultrapassa o dia")
+    void deveImpedirAtendimentoQueUltrapassaODia() {
+        AtendimentoRequest request = new AtendimentoRequest(
+                1L,
+                2L,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(23, 30),
+                60,
+                "Plantao"
+        );
+        when(pacienteClient.buscarPorId(1L, "Bearer token")).thenReturn(pacienteAtivo());
+        when(profissionalClient.buscarPorId(2L, "Bearer token")).thenReturn(dentistaAtivo(2L));
+
+        assertThatThrownBy(() -> atendimentoService.cadastrar(request, "Bearer token"))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Horario e duracao do atendimento devem terminar no mesmo dia");
     }
 
     @Test
@@ -99,11 +168,14 @@ class AtendimentoServiceTest {
     void deveListarApenasAtendimentosDoDentista() {
         Atendimento atendimento = atendimentoSalvo(2L);
         when(profissionalClient.buscarMeuPerfil("Bearer token")).thenReturn(dentistaAtivo(2L));
-        when(atendimentoRepository.buscarAtivosComFiltros(null, 2L, null, null)).thenReturn(List.of(atendimento));
+        when(atendimentoRepository.buscarAtivosComFiltros(null, 2L, null, null, null, null, null)).thenReturn(List.of(atendimento));
 
         List<AtendimentoResponse> response = atendimentoService.listar(
                 null,
                 99L,
+                null,
+                null,
+                null,
                 null,
                 null,
                 autenticacaoDentista(),
@@ -112,27 +184,30 @@ class AtendimentoServiceTest {
 
         assertThat(response).hasSize(1);
         assertThat(response.getFirst().profissionalId()).isEqualTo(2L);
-        verify(atendimentoRepository).buscarAtivosComFiltros(null, 2L, null, null);
+        verify(atendimentoRepository).buscarAtivosComFiltros(null, 2L, null, null, null, null, null);
     }
 
     @Test
     @DisplayName("deve permitir gerente listar com filtros informados")
     void devePermitirGerenteListarComFiltros() {
         LocalDate data = LocalDate.now().plusDays(1);
-        when(atendimentoRepository.buscarAtivosComFiltros(1L, 2L, data, StatusAtendimento.AGENDADO))
+        when(atendimentoRepository.buscarAtivosComFiltros(1L, 2L, data, null, null, StatusAtendimento.AGENDADO, null))
                 .thenReturn(List.of(atendimentoSalvo(2L)));
 
         List<AtendimentoResponse> response = atendimentoService.listar(
                 1L,
                 2L,
                 data,
+                null,
+                null,
                 StatusAtendimento.AGENDADO,
+                null,
                 autenticacaoGerente(),
                 "Bearer token"
         );
 
         assertThat(response).hasSize(1);
-        verify(atendimentoRepository).buscarAtivosComFiltros(1L, 2L, data, StatusAtendimento.AGENDADO);
+        verify(atendimentoRepository).buscarAtivosComFiltros(1L, 2L, data, null, null, StatusAtendimento.AGENDADO, null);
     }
 
     @Test
@@ -242,12 +317,14 @@ class AtendimentoServiceTest {
                 .isInstanceOf(RegraDeNegocioException.class)
                 .hasMessage("Atendimento realizado nao pode ser cancelado");
     }
+
     private AtendimentoRequest requestPadrao() {
         return new AtendimentoRequest(
                 1L,
                 2L,
                 LocalDate.now().plusDays(1),
                 LocalTime.of(9, 0),
+                45,
                 "Consulta inicial"
         );
     }
@@ -261,15 +338,20 @@ class AtendimentoServiceTest {
     }
 
     private Atendimento atendimentoSalvo(Long profissionalId) {
+        return atendimentoSalvo(profissionalId, 1L, LocalTime.of(9, 0), 60);
+    }
+
+    private Atendimento atendimentoSalvo(Long profissionalId, Long pacienteId, LocalTime hora, Integer duracaoMinutos) {
         Atendimento atendimento = new Atendimento();
         atendimento.setId(10L);
-        atendimento.setPacienteId(1L);
+        atendimento.setPacienteId(pacienteId);
         atendimento.setPacienteNome("Maria Silva");
         atendimento.setProfissionalId(profissionalId);
         atendimento.setProfissionalNome("Dr Joao");
         atendimento.setProfissionalEmail("joao@clinica.com");
         atendimento.setDataAtendimento(LocalDate.now().plusDays(1));
-        atendimento.setHoraAtendimento(LocalTime.of(9, 0));
+        atendimento.setHoraAtendimento(hora);
+        atendimento.setDuracaoMinutos(duracaoMinutos);
         atendimento.setStatus(StatusAtendimento.AGENDADO);
         atendimento.setAtivo(true);
         return atendimento;

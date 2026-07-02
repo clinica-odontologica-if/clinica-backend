@@ -74,6 +74,45 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  mysql-estoque:
+    image: mysql:8.0
+    container_name: clinica-mysql-estoque
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_estoque
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql_estoque_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mysql-financeiro:
+    image: mysql:8.0
+    container_name: clinica-mysql-financeiro
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinica_financeiro
+    ports:
+      - "3312:3306"
+    volumes:
+      - mysql_financeiro_data:/var/lib/mysql
+    networks:
+      - clinica-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   config-server:
     build: ./config-server
     container_name: config-server
@@ -214,6 +253,64 @@ services:
         condition: service_started
     networks:
       - clinica-net
+
+  servico-estoque:
+    build: ./servico-estoque
+    container_name: clinica-estoque
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_ESTOQUE_URL: jdbc:mysql://clinica-mysql-estoque:3306/clinica_estoque
+      SPRING_DATASOURCE_ESTOQUE_USERNAME: root
+      SPRING_DATASOURCE_ESTOQUE_PASSWORD: root
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/estoque/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      mysql-estoque:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - clinica-net
+
+  servico-financeiro:
+    build: ./servico-financeiro
+    container_name: clinica-financeiro
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_FINANCEIRO_URL: jdbc:mysql://clinica-mysql-financeiro:3306/clinica_financeiro
+      SPRING_DATASOURCE_FINANCEIRO_USERNAME: root
+      SPRING_DATASOURCE_FINANCEIRO_PASSWORD: root
+      SERVICO_ATENDIMENTO_URL: http://servico-atendimento:8084
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/financeiro/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      mysql-financeiro:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      servico-atendimento:
+        condition: service_healthy
+    networks:
+      - clinica-net
+
   frontend-autenticacao:
     build: ./frontend-autenticacao
     container_name: clinica-auth-frontend
@@ -228,6 +325,10 @@ services:
         condition: service_started
       servico-atendimento:
         condition: service_healthy
+      servico-estoque:
+        condition: service_healthy
+      servico-financeiro:
+        condition: service_healthy
     networks:
       - clinica-net
 
@@ -235,8 +336,9 @@ volumes:
   mysql_data:
   mysql_profissional_data:
   mysql_paciente_data:
-
   mysql_atendimento_data:
+  mysql_estoque_data:
+  mysql_financeiro_data:
 
 networks:
   clinica-net:

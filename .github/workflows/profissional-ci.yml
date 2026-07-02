@@ -1,15 +1,17 @@
-name: CI - Serviço de Profissional
+name: CI - Servico de Profissional
 
 on:
   push:
     branches:
       - '**'
     paths:
-      - 'servico-profissional/servico-profissional/**'
+      - 'servico-profissional/**'
+      - '.github/workflows/profissional-ci.yml'
   pull_request:
     branches: [ "main", "develop" ]
     paths:
-      - 'servico-profissional/servico-profissional/**'
+      - 'servico-profissional/**'
+      - '.github/workflows/profissional-ci.yml'
 
 jobs:
   test:
@@ -17,10 +19,10 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./servico-profissional/servico-profissional
+        working-directory: ./servico-profissional
 
     steps:
-      - name: Checkout do código
+      - name: Checkout do codigo
         uses: actions/checkout@v4
 
       - name: Configurar JDK 21
@@ -30,5 +32,5 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Executar Testes do Serviço de Profissional
+      - name: Executar testes do servico de profissional
         run: mvn clean test

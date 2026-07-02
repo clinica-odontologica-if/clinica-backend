@@ -59,6 +59,8 @@
         <button type="button" class="nav-item active" data-page="inicio">Inicio</button>
         <button type="button" class="nav-item" data-page="profissionais">Profissionais</button>
         <button type="button" class="nav-item" data-page="atendimentos">Atendimentos</button>
+        <button type="button" class="nav-item" data-page="estoque">Estoque</button>
+        <button type="button" class="nav-item" data-page="financeiro">Financeiro</button>
         <button type="button" class="nav-item" data-page="pacientes">Pacientes</button>
         <button type="button" class="nav-item" data-page="configuracoes">Configuracoes</button>
       </nav>
@@ -214,7 +216,7 @@
           <option value="">Busque e selecione um dentista</option>
         </select>
 
-        <div class="form-grid-2">
+        <div class="form-grid-3">
           <div>
             <label for="atendimentoData">Data</label>
             <input id="atendimentoData" name="data" type="date" required />
@@ -222,6 +224,10 @@
           <div>
             <label for="atendimentoHora">Horario</label>
             <input id="atendimentoHora" name="hora" type="time" required />
+          </div>
+          <div>
+            <label for="atendimentoDuracaoMinutos">Duracao (min)</label>
+            <input id="atendimentoDuracaoMinutos" name="duracaoMinutos" type="number" min="15" max="480" step="15" value="60" required />
           </div>
         </div>
 
@@ -258,21 +264,52 @@
         <button type="submit" class="secondary-button">Filtrar</button>
       </form>
 
+      <section id="realizacaoAtendimentoPanel" class="inline-editor" hidden>
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="eyebrow">Execucao</p>
+            <h3 id="realizacaoAtendimentoTitulo">Realizar atendimento</h3>
+          </div>
+          <button id="fecharRealizacaoAtendimentoButton" type="button" class="secondary-button">Fechar</button>
+        </div>
+
+        <form id="realizacaoAtendimentoForm" class="data-form">
+          <input id="realizacaoAtendimentoId" name="id" type="hidden" />
+
+          <label for="realizacaoProcedimento">Procedimento realizado</label>
+          <input id="realizacaoProcedimento" name="procedimentoRealizado" type="text" maxlength="255" required />
+
+          <label for="realizacaoObservacoes">Observacoes</label>
+          <textarea id="realizacaoObservacoes" name="observacoes" rows="3"></textarea>
+
+          <label for="realizacaoValor">Valor</label>
+          <input id="realizacaoValor" name="valor" type="number" min="0" step="0.01" />
+
+          <div class="form-actions">
+            <button id="salvarRealizacaoButton" type="submit" class="primary-button">Realizar</button>
+            <button id="cancelarRealizacaoButton" type="button" class="secondary-button">Cancelar</button>
+          </div>
+          <p id="realizacaoAtendimentoMessage" class="message" role="status"></p>
+        </form>
+      </section>
+
       <div class="table-wrap">
         <table class="data-table agenda-table">
           <thead>
           <tr>
             <th>Data</th>
             <th>Horario</th>
+            <th>Duracao</th>
             <th>Paciente</th>
             <th>Dentista</th>
             <th>Status</th>
             <th>Observacoes</th>
+            <th>Acoes</th>
           </tr>
           </thead>
           <tbody id="atendimentosTabela">
           <tr>
-            <td colspan="6">Carregando...</td>
+            <td colspan="8">Carregando...</td>
           </tr>
           </tbody>
         </table>
@@ -355,6 +392,158 @@
   </section>
 </template>
 
+
+<template id="pagina-estoque">
+  <section class="workspace-grid estoque-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Materiais</p>
+          <h3 id="materialFormTitulo">Cadastrar material</h3>
+        </div>
+        <span id="estoqueStatus" class="status-pill">aguardando</span>
+      </div>
+
+      <form id="materialForm" class="data-form">
+        <input id="materialId" name="id" type="hidden" />
+        <label for="materialNome">Nome</label>
+        <input id="materialNome" name="nome" type="text" required />
+        <label for="materialDescricao">Descricao</label>
+        <input id="materialDescricao" name="descricao" type="text" />
+        <div class="form-grid-2">
+          <div>
+            <label for="materialCategoria">Categoria</label>
+            <select id="materialCategoria" name="categoria"></select>
+            <input id="materialCategoriaOutra" name="categoriaOutra" type="text" placeholder="Nova categoria" hidden />
+          </div>
+          <div>
+            <label for="materialUnidadeMedida">Unidade</label>
+            <select id="materialUnidadeMedida" name="unidadeMedida" required>
+              <option value="UNIDADE">Unidade</option>
+              <option value="CAIXA">Caixa</option>
+              <option value="PACOTE">Pacote</option>
+              <option value="ML">ML</option>
+              <option value="MG">MG</option>
+              <option value="G">G</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div>
+            <label for="materialQuantidadeAtual">Quantidade atual</label>
+            <input id="materialQuantidadeAtual" name="quantidadeAtual" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div>
+            <label for="materialQuantidadeMinima">Quantidade minima</label>
+            <input id="materialQuantidadeMinima" name="quantidadeMinima" type="number" min="0" step="0.01" value="0" required />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="salvarMaterialButton" type="submit" class="primary-button">Salvar</button>
+          <button id="cancelarEdicaoMaterialButton" type="button" class="secondary-button" hidden>Cancelar</button>
+        </div>
+        <p id="materialMessage" class="message" role="status"></p>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">Movimentacao</p><h3>Registrar estoque</h3></div></div>
+      <form id="movimentacaoForm" class="data-form">
+        <label for="movimentacaoMaterialId">Material</label>
+        <select id="movimentacaoMaterialId" name="materialId" required><option value="">Selecione um material</option></select>
+        <div class="form-grid-2">
+          <div>
+            <label for="movimentacaoTipo">Tipo</label>
+            <select id="movimentacaoTipo" name="tipo" required>
+              <option value="ENTRADA">Entrada</option>
+              <option value="SAIDA">Saida</option>
+              <option value="AJUSTE">Ajuste</option>
+            </select>
+          </div>
+          <div>
+            <label for="movimentacaoQuantidade">Quantidade</label>
+            <input id="movimentacaoQuantidade" name="quantidade" type="number" min="0" step="0.01" required />
+          </div>
+        </div>
+        <label for="movimentacaoMotivo">Motivo</label>
+        <input id="movimentacaoMotivo" name="motivo" type="text" placeholder="Obrigatorio para saida e ajuste" />
+        <div class="form-actions single-action"><button id="registrarMovimentacaoButton" type="submit" class="primary-button">Registrar</button></div>
+        <p id="movimentacaoMessage" class="message" role="status"></p>
+      </form>
+    </article>
+  </section>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div><p class="eyebrow">Saldos</p><h3>Materiais cadastrados</h3></div>
+      <button id="recarregarMateriaisButton" type="button" class="secondary-button">Atualizar</button>
+    </div>
+    <form id="materialFiltroForm" class="filters-bar estoque-filters">
+      <input id="filtroMaterialBusca" name="busca" type="search" placeholder="Buscar material" aria-label="Buscar material" />
+      <select id="filtroMaterialCategoria" name="categoria" aria-label="Categoria"></select>
+      <select id="filtroMaterialBaixoEstoque" name="baixoEstoque" aria-label="Baixo estoque">
+        <option value="">Todos</option>
+        <option value="true">Baixo estoque</option>
+        <option value="false">Estoque ok</option>
+      </select>
+      <button type="submit" class="secondary-button">Filtrar</button>
+    </form>
+    <div class="table-wrap"><table class="data-table estoque-table"><thead><tr><th>Material</th><th>Categoria</th><th>Saldo</th><th>Minimo</th><th>Status</th><th>Acoes</th></tr></thead><tbody id="materiaisTabela"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div>
+  </article>
+</template>
+
+<template id="pagina-financeiro">
+  <section class="finance-summary">
+    <article class="metric-card"><span>Receitas</span><strong id="financeiroTotalReceitas">R$ 0,00</strong></article>
+    <article class="metric-card"><span>Despesas</span><strong id="financeiroTotalDespesas">R$ 0,00</strong></article>
+    <article class="metric-card"><span>Saldo</span><strong id="financeiroSaldo">R$ 0,00</strong></article>
+  </section>
+  <section class="workspace-grid financeiro-grid">
+    <article class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">Receitas</p><h3>Registrar pagamento</h3></div><span id="financeiroStatus" class="status-pill">aguardando</span></div>
+      <form id="receitaForm" class="data-form">
+                <input id="receitaAtendimentoId" name="atendimentoId" type="hidden" required />
+        <div class="lookup-panel">
+          <label for="pagamentoBuscaAtendimento">Buscar atendimento</label>
+          <div id="pagamentoAtendimentoFiltroForm" class="filters-bar pagamento-filters">
+            <input id="pagamentoBuscaAtendimento" name="busca" type="search" placeholder="Paciente ou dentista" aria-label="Paciente ou dentista" />
+            <input id="pagamentoDataInicio" name="dataInicio" type="date" aria-label="Data inicial" />
+            <input id="pagamentoDataFim" name="dataFim" type="date" aria-label="Data final" />
+            <select id="pagamentoStatusAtendimento" name="status" aria-label="Status do atendimento">
+              <option value="REALIZADO">Realizados</option>
+              <option value="CONFIRMADO">Confirmados</option>
+              <option value="AGENDADO">Agendados</option>
+              <option value="">Todos</option>
+            </select>
+            <button id="buscarAtendimentosPagamentoButton" type="button" class="secondary-button">Buscar</button>
+          </div>
+          <p id="atendimentoSelecionadoResumo" class="selected-record">Nenhum atendimento selecionado.</p>
+          <div class="table-wrap"><table class="data-table pagamento-atendimentos-table"><thead><tr><th>Data</th><th>Paciente</th><th>Dentista</th><th>Status</th><th>Valor</th><th>Acoes</th></tr></thead><tbody id="pagamentoAtendimentosTabela"><tr><td colspan="6">Busque um atendimento para registrar pagamento.</td></tr></tbody></table></div>
+        </div>
+        <label for="receitaDescricao">Descricao</label><input id="receitaDescricao" name="descricao" type="text" value="Pagamento de atendimento" />
+        <div class="form-grid-2"><div><label for="receitaValor">Valor</label><input id="receitaValor" name="valor" type="number" min="0.01" step="0.01" required /></div><div><label for="receitaFormaPagamento">Forma</label><select id="receitaFormaPagamento" name="formaPagamento" required><option value="PIX">PIX</option><option value="DINHEIRO">Dinheiro</option><option value="CARTAO_CREDITO">Cartao credito</option><option value="CARTAO_DEBITO">Cartao debito</option><option value="CONVENIO">Convenio</option></select></div></div>
+        <div class="form-grid-2"><div><label for="receitaStatus">Status</label><select id="receitaStatus" name="status"><option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option></select></div><div><label for="receitaDataPagamento">Pagamento</label><input id="receitaDataPagamento" name="dataPagamento" type="date" /></div></div>
+        <label for="receitaDataVencimento">Vencimento</label><input id="receitaDataVencimento" name="dataVencimento" type="date" />
+        <div class="form-actions single-action"><button id="salvarReceitaButton" type="submit" class="primary-button">Registrar receita</button></div><p id="receitaMessage" class="message" role="status"></p>
+      </form>
+    </article>
+    <article class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">Despesas</p><h3>Registrar despesa</h3></div></div>
+      <form id="despesaForm" class="data-form">
+        <label for="despesaDescricao">Descricao</label><input id="despesaDescricao" name="descricao" type="text" required />
+        <div class="form-grid-2"><div><label for="despesaCategoria">Categoria</label><select id="despesaCategoria" name="categoria" required><option value="MATERIAL">Material</option><option value="SALARIO">Salario</option><option value="ALUGUEL">Aluguel</option><option value="MANUTENCAO">Manutencao</option><option value="IMPOSTO">Imposto</option><option value="OUTROS">Outros</option></select></div><div><label for="despesaValor">Valor</label><input id="despesaValor" name="valor" type="number" min="0.01" step="0.01" required /></div></div>
+        <div class="form-grid-2"><div><label for="despesaStatus">Status</label><select id="despesaStatus" name="status"><option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option></select></div><div><label for="despesaDataPagamento">Pagamento</label><input id="despesaDataPagamento" name="dataPagamento" type="date" /></div></div>
+        <label for="despesaDataVencimento">Vencimento</label><input id="despesaDataVencimento" name="dataVencimento" type="date" />
+        <div class="form-actions single-action"><button id="salvarDespesaButton" type="submit" class="primary-button">Registrar despesa</button></div><p id="despesaMessage" class="message" role="status"></p>
+      </form>
+    </article>
+  </section>
+  <article class="panel">
+    <div class="panel-heading"><div><p class="eyebrow">Relatorio</p><h3>Movimento financeiro</h3></div><button id="recarregarFinanceiroButton" type="button" class="secondary-button">Atualizar</button></div>
+    <form id="financeiroFiltroForm" class="filters-bar financeiro-filters"><input id="financeiroDataInicio" name="dataInicio" type="date" required aria-label="Data inicial" /><input id="financeiroDataFim" name="dataFim" type="date" required aria-label="Data final" /><button type="submit" class="secondary-button">Gerar</button></form>
+    <div class="financeiro-columns"><section><h3>Receitas</h3><div class="table-wrap"><table class="data-table financeiro-table"><thead><tr><th>Atendimento</th><th>Valor</th><th>Forma</th><th>Status</th><th>Pagamento</th></tr></thead><tbody id="receitasTabela"><tr><td colspan="5">Carregando...</td></tr></tbody></table></div></section><section><h3>Despesas</h3><div class="table-wrap"><table class="data-table financeiro-table"><thead><tr><th>Descricao</th><th>Valor</th><th>Categoria</th><th>Status</th><th>Pagamento</th></tr></thead><tbody id="despesasTabela"><tr><td colspan="5">Carregando...</td></tr></tbody></table></div></section></div>
+  </article>
+</template>
 <template id="pagina-configuracoes">
   <article class="panel">
     <h3>Configuracoes</h3>
