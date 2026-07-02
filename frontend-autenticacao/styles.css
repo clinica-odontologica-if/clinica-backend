@@ -771,3 +771,37 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.lookup-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.pagamento-filters {
+  grid-template-columns: minmax(160px, 1fr) minmax(130px, 170px) minmax(130px, 170px) minmax(130px, 170px) auto;
+}
+
+.selected-record {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8fbff;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pagamento-atendimentos-table {
+  min-width: 760px;
+}
+
+.data-table small {
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .pagamento-filters {
+    grid-template-columns: 1fr;
+  }
+}

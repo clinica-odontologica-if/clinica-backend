@@ -47,11 +47,34 @@ class AtendimentoRepositoryTest {
                 1L,
                 2L,
                 LocalDate.of(2026, 7, 10),
-                StatusAtendimento.AGENDADO
+                null,
+                null,
+                StatusAtendimento.AGENDADO,
+                null
         );
 
         assertThat(encontrados).hasSize(1);
         assertThat(encontrados.get(0).getPacienteNome()).isEqualTo("Maria Silva");
+    }
+
+    @Test
+    @DisplayName("deve filtrar atendimentos por periodo e busca textual")
+    void deveFiltrarAtendimentosPorPeriodoEBuscaTextual() {
+        Atendimento atendimento = atendimentoBase();
+        atendimentoRepository.saveAndFlush(atendimento);
+
+        List<Atendimento> encontrados = atendimentoRepository.buscarAtivosComFiltros(
+                null,
+                null,
+                null,
+                LocalDate.of(2026, 7, 1),
+                LocalDate.of(2026, 7, 31),
+                null,
+                "ana"
+        );
+
+        assertThat(encontrados).hasSize(1);
+        assertThat(encontrados.getFirst().getProfissionalNome()).isEqualTo("Dra Ana");
     }
 
     private Atendimento atendimentoBase() {

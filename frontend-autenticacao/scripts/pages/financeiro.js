@@ -7,6 +7,7 @@ const canManageReceitas = () => hasAnyRole("GERENTE", "ATENDENTE");
 const canManageFinanceiro = () => hasAnyRole("GERENTE");
 
 let atendimentosFinanceiro = [];
+let receitasFinanceiro = [];
 
 const fetchJson = async (url, options = {}, fallback = "Nao foi possivel concluir a operacao.") => {
   const response = await fetch(url, {
@@ -60,49 +61,11 @@ const getAtendimentoResumo = (atendimentoId) => {
   return atendimento ? getAtendimentoLabel(atendimento) : `Atendimento #${atendimentoId ?? "-"}`;
 };
 
-const renderAtendimentoOptions = (receitas = []) => {
-  const select = document.querySelector("#receitaAtendimentoId");
-  if (!select) return;
+const getAtendimentosComReceita = () => new Set(receitasFinanceiro.map((receita) => Number(receita.atendimentoId)));
 
-  const atendimentosComReceita = new Set(receitas.map((receita) => Number(receita.atendimentoId)));
-  const selecionaveis = atendimentosFinanceiro.filter((atendimento) => {
-    const status = String(atendimento.status || "").toUpperCase();
-    return atendimento.ativo && !["CANCELADO", "NAO_COMPARECEU"].includes(status) && !atendimentosComReceita.has(Number(atendimento.id));
-  });
-
-  if (!selecionaveis.length) {
-    select.innerHTML = '<option value="">Nenhum atendimento disponivel</option>';
-    return;
-  }
-
-  select.innerHTML = '<option value="">Selecione um atendimento</option>' + selecionaveis
-    .map((atendimento) => `<option value="${atendimento.id}">${escapeHtml(getAtendimentoLabel(atendimento))}</option>`)
-    .join("");
-};
-
-const carregarAtendimentosParaReceita = async (receitas = []) => {
-  const select = document.querySelector("#receitaAtendimentoId");
-  if (!select || !canManageReceitas()) return;
-
-  select.innerHTML = '<option value="">Carregando atendimentos...</option>';
-  try {
-    const atendimentos = await fetchJson("/api/atendimentos", {}, "Nao foi possivel carregar atendimentos.");
-    atendimentosFinanceiro = Array.isArray(atendimentos) ? atendimentos : [];
-    renderAtendimentoOptions(receitas);
-  } catch (error) {
-    select.innerHTML = '<option value="">Erro ao carregar atendimentos</option>';
-    setPageMessage("#receitaMessage", error.message, "error");
-  }
-};
-
-const preencherDadosDoAtendimentoSelecionado = () => {
-  const atendimentoId = document.querySelector("#receitaAtendimentoId")?.value;
-  const atendimento = atendimentosFinanceiro.find((item) => Number(item.id) === Number(atendimentoId));
-  if (!atendimento) return;
-
-  if (atendimento.valor && Number(atendimento.valor) > 0) {
-    document.querySelector("#receitaValor").value = Number(atendimento.valor).toFixed(2);
-  }
+const isAtendimentoSelecionavel = (atendimento) => {
+  const status = String(atendimento.status || "").toUpperCase();
+  return atendimento.ativo && !["CANCELADO", "NAO_COMPARECEU"].includes(status) && !getAtendimentosComReceita().has(Number(atendimento.id));
 };
 
 const setLoading = (selector, colspan = 5) => {
@@ -112,17 +75,107 @@ const setLoading = (selector, colspan = 5) => {
   }
 };
 
+const getPagamentoFiltroParams = () => {
+  const params = new URLSearchParams();
+  const busca = document.querySelector("#pagamentoBuscaAtendimento")?.value?.trim();
+  const dataInicio = document.querySelector("#pagamentoDataInicio")?.value;
+  const dataFim = document.querySelector("#pagamentoDataFim")?.value;
+  const status = document.querySelector("#pagamentoStatusAtendimento")?.value;
+
+  if (busca) params.set("busca", busca);
+  if (dataInicio) params.set("dataInicio", dataInicio);
+  if (dataFim) params.set("dataFim", dataFim);
+  if (status) params.set("status", status);
+
+  return params;
+};
+
+const limparAtendimentoSelecionado = () => {
+  const atendimentoId = document.querySelector("#receitaAtendimentoId");
+  const resumo = document.querySelector("#atendimentoSelecionadoResumo");
+  if (atendimentoId) atendimentoId.value = "";
+  if (resumo) resumo.textContent = "Nenhum atendimento selecionado.";
+};
+
+const renderAtendimentosPagamento = (atendimentos = []) => {
+  const tbody = document.querySelector("#pagamentoAtendimentosTabela");
+  if (!tbody) return;
+
+  const selecionaveis = atendimentos.filter(isAtendimentoSelecionavel);
+  if (!selecionaveis.length) {
+    tbody.innerHTML = '<tr><td colspan="6">Nenhum atendimento disponivel para pagamento.</td></tr>';
+    limparAtendimentoSelecionado();
+    return;
+  }
+
+  tbody.innerHTML = selecionaveis
+    .map((atendimento) => `
+      <tr>
+        <td>${escapeHtml(formatData(atendimento.data))}<br><small>${escapeHtml(formatHora(atendimento.hora))}</small></td>
+        <td>${escapeHtml(atendimento.pacienteNome || "-")}</td>
+        <td>${escapeHtml(atendimento.profissionalNome || "-")}</td>
+        <td><span class="status-badge status-${String(atendimento.status || "").toLowerCase()}">${escapeHtml(formatEnum(atendimento.status))}</span></td>
+        <td>${formatMoeda(atendimento.valor)}</td>
+        <td><button type="button" class="table-action" data-action="selecionar-atendimento" data-id="${atendimento.id}">Selecionar</button></td>
+      </tr>
+    `)
+    .join("");
+};
+
+const carregarAtendimentosParaReceita = async () => {
+  const tbody = document.querySelector("#pagamentoAtendimentosTabela");
+  if (!tbody || !canManageReceitas()) return;
+
+  setLoading("#pagamentoAtendimentosTabela", 6);
+  try {
+    const params = getPagamentoFiltroParams();
+    const atendimentos = await fetchJson(
+      `/api/atendimentos${params.toString() ? `?${params}` : ""}`,
+      {},
+      "Nao foi possivel carregar atendimentos."
+    );
+    atendimentosFinanceiro = Array.isArray(atendimentos) ? atendimentos : [];
+    renderAtendimentosPagamento(atendimentosFinanceiro);
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
+    setPageMessage("#receitaMessage", error.message, "error");
+  }
+};
+
+const selecionarAtendimentoParaPagamento = (atendimentoId) => {
+  const atendimento = atendimentosFinanceiro.find((item) => Number(item.id) === Number(atendimentoId));
+  if (!atendimento) return;
+
+  document.querySelector("#receitaAtendimentoId").value = atendimento.id;
+  document.querySelector("#atendimentoSelecionadoResumo").textContent = `Selecionado: ${getAtendimentoLabel(atendimento)}`;
+
+  if (atendimento.valor && Number(atendimento.valor) > 0) {
+    document.querySelector("#receitaValor").value = Number(atendimento.valor).toFixed(2);
+  }
+};
+
+const handlePagamentoAtendimentoAction = (event) => {
+  const button = event.target.closest("button[data-action='selecionar-atendimento']");
+  if (!button) return;
+  selecionarAtendimentoParaPagamento(button.dataset.id);
+};
+
 const receitaPayloadFromForm = (form) => {
   const formData = new FormData(form);
+  const atendimentoId = Number(formData.get("atendimentoId"));
   const status = formData.get("status") || "PENDENTE";
   const dataPagamento = formData.get("dataPagamento") || null;
+
+  if (!atendimentoId) {
+    throw new Error("Selecione um atendimento para registrar o pagamento.");
+  }
 
   if (status === "PAGO" && !dataPagamento) {
     throw new Error("Informe a data de pagamento para registrar receita paga.");
   }
 
   return {
-    atendimentoId: Number(formData.get("atendimentoId")),
+    atendimentoId,
     descricao: String(formData.get("descricao") || "Pagamento de atendimento").trim(),
     valor: Number(formData.get("valor")),
     formaPagamento: formData.get("formaPagamento"),
@@ -246,11 +299,12 @@ const carregarFinanceiro = async () => {
 
   try {
     const receitas = await fetchJson(`/api/receitas?${query}`, {}, "Nao foi possivel carregar receitas.");
-    await carregarAtendimentosParaReceita(receitas);
-    renderReceitas(receitas);
+    receitasFinanceiro = Array.isArray(receitas) ? receitas : [];
+    await carregarAtendimentosParaReceita();
+    renderReceitas(receitasFinanceiro);
 
     if (!canManageFinanceiro()) {
-      renderResumoRestrito(receitas);
+      renderResumoRestrito(receitasFinanceiro);
       renderDespesas([]);
       document.querySelector("#financeiroStatus").textContent = "atualizado";
       return;
@@ -262,7 +316,7 @@ const carregarFinanceiro = async () => {
     ]);
 
     renderDespesas(despesas);
-    renderResumo(relatorio, receitas, despesas);
+    renderResumo(relatorio, receitasFinanceiro, despesas);
     document.querySelector("#financeiroStatus").textContent = "atualizado";
   } catch (error) {
     setPageMessage("#receitaMessage", error.message, "error");
@@ -288,7 +342,7 @@ const salvarReceita = async (event) => {
     );
     form.reset();
     document.querySelector("#receitaDescricao").value = "Pagamento de atendimento";
-    await carregarAtendimentosParaReceita();
+    limparAtendimentoSelecionado();
     setPageMessage("#receitaMessage", "Receita registrada com sucesso.", "success");
     await carregarFinanceiro();
   } catch (error) {
@@ -328,6 +382,8 @@ const configurarPeriodoInicial = () => {
   const { dataInicio, dataFim } = getPeriodoPadrao();
   document.querySelector("#financeiroDataInicio").value = dataInicio;
   document.querySelector("#financeiroDataFim").value = dataFim;
+  document.querySelector("#pagamentoDataInicio").value = dataInicio;
+  document.querySelector("#pagamentoDataFim").value = dataFim;
 };
 
 const aplicarRestricoesDePerfil = () => {
@@ -344,7 +400,8 @@ export const initFinanceiroPage = () => {
   configurarPeriodoInicial();
   aplicarRestricoesDePerfil();
 
-  document.querySelector("#receitaAtendimentoId")?.addEventListener("change", preencherDadosDoAtendimentoSelecionado);
+  document.querySelector("#pagamentoAtendimentosTabela")?.addEventListener("click", handlePagamentoAtendimentoAction);
+  document.querySelector("#buscarAtendimentosPagamentoButton")?.addEventListener("click", carregarAtendimentosParaReceita);
   document.querySelector("#receitaForm")?.addEventListener("submit", salvarReceita);
   document.querySelector("#despesaForm")?.addEventListener("submit", salvarDespesa);
   document.querySelector("#financeiroFiltroForm")?.addEventListener("submit", (event) => {

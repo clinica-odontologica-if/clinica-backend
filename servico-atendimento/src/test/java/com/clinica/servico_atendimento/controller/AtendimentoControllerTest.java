@@ -96,7 +96,7 @@ class AtendimentoControllerTest {
     @WithMockUser(roles = "DENTISTA")
     @DisplayName("deve listar atendimentos para dentista")
     void deveListarAtendimentosParaDentista() throws Exception {
-        when(atendimentoService.listar(eq(null), eq(null), eq(LocalDate.of(2099, 1, 10)), eq(StatusAtendimento.AGENDADO), any(), eq("Bearer token")))
+        when(atendimentoService.listar(eq(null), eq(null), eq(LocalDate.of(2099, 1, 10)), eq(null), eq(null), eq(StatusAtendimento.AGENDADO), eq(null), any(), eq("Bearer token")))
                 .thenReturn(List.of(responsePadrao()));
 
         mockMvc.perform(get("/atendimentos")
@@ -106,6 +106,32 @@ class AtendimentoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].profissionalId").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "ATENDENTE")
+    @DisplayName("deve listar atendimentos com periodo e busca")
+    void deveListarAtendimentosComPeriodoEBusca() throws Exception {
+        when(atendimentoService.listar(
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(LocalDate.of(2099, 1, 1)),
+                eq(LocalDate.of(2099, 1, 31)),
+                eq(StatusAtendimento.REALIZADO),
+                eq("Maria"),
+                any(),
+                eq("Bearer token")
+        )).thenReturn(List.of(responseRealizado()));
+
+        mockMvc.perform(get("/atendimentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token")
+                        .param("dataInicio", "2099-01-01")
+                        .param("dataFim", "2099-01-31")
+                        .param("status", "REALIZADO")
+                        .param("busca", "Maria"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pacienteNome").value("Maria Silva"));
     }
 
     @Test

@@ -168,11 +168,14 @@ class AtendimentoServiceTest {
     void deveListarApenasAtendimentosDoDentista() {
         Atendimento atendimento = atendimentoSalvo(2L);
         when(profissionalClient.buscarMeuPerfil("Bearer token")).thenReturn(dentistaAtivo(2L));
-        when(atendimentoRepository.buscarAtivosComFiltros(null, 2L, null, null)).thenReturn(List.of(atendimento));
+        when(atendimentoRepository.buscarAtivosComFiltros(null, 2L, null, null, null, null, null)).thenReturn(List.of(atendimento));
 
         List<AtendimentoResponse> response = atendimentoService.listar(
                 null,
                 99L,
+                null,
+                null,
+                null,
                 null,
                 null,
                 autenticacaoDentista(),
@@ -181,27 +184,30 @@ class AtendimentoServiceTest {
 
         assertThat(response).hasSize(1);
         assertThat(response.getFirst().profissionalId()).isEqualTo(2L);
-        verify(atendimentoRepository).buscarAtivosComFiltros(null, 2L, null, null);
+        verify(atendimentoRepository).buscarAtivosComFiltros(null, 2L, null, null, null, null, null);
     }
 
     @Test
     @DisplayName("deve permitir gerente listar com filtros informados")
     void devePermitirGerenteListarComFiltros() {
         LocalDate data = LocalDate.now().plusDays(1);
-        when(atendimentoRepository.buscarAtivosComFiltros(1L, 2L, data, StatusAtendimento.AGENDADO))
+        when(atendimentoRepository.buscarAtivosComFiltros(1L, 2L, data, null, null, StatusAtendimento.AGENDADO, null))
                 .thenReturn(List.of(atendimentoSalvo(2L)));
 
         List<AtendimentoResponse> response = atendimentoService.listar(
                 1L,
                 2L,
                 data,
+                null,
+                null,
                 StatusAtendimento.AGENDADO,
+                null,
                 autenticacaoGerente(),
                 "Bearer token"
         );
 
         assertThat(response).hasSize(1);
-        verify(atendimentoRepository).buscarAtivosComFiltros(1L, 2L, data, StatusAtendimento.AGENDADO);
+        verify(atendimentoRepository).buscarAtivosComFiltros(1L, 2L, data, null, null, StatusAtendimento.AGENDADO, null);
     }
 
     @Test

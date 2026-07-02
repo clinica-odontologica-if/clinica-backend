@@ -502,7 +502,24 @@
     <article class="panel">
       <div class="panel-heading"><div><p class="eyebrow">Receitas</p><h3>Registrar pagamento</h3></div><span id="financeiroStatus" class="status-pill">aguardando</span></div>
       <form id="receitaForm" class="data-form">
-        <label for="receitaAtendimentoId">Atendimento</label><select id="receitaAtendimentoId" name="atendimentoId" required><option value="">Carregando atendimentos...</option></select>
+                <input id="receitaAtendimentoId" name="atendimentoId" type="hidden" required />
+        <div class="lookup-panel">
+          <label for="pagamentoBuscaAtendimento">Buscar atendimento</label>
+          <div id="pagamentoAtendimentoFiltroForm" class="filters-bar pagamento-filters">
+            <input id="pagamentoBuscaAtendimento" name="busca" type="search" placeholder="Paciente ou dentista" aria-label="Paciente ou dentista" />
+            <input id="pagamentoDataInicio" name="dataInicio" type="date" aria-label="Data inicial" />
+            <input id="pagamentoDataFim" name="dataFim" type="date" aria-label="Data final" />
+            <select id="pagamentoStatusAtendimento" name="status" aria-label="Status do atendimento">
+              <option value="REALIZADO">Realizados</option>
+              <option value="CONFIRMADO">Confirmados</option>
+              <option value="AGENDADO">Agendados</option>
+              <option value="">Todos</option>
+            </select>
+            <button id="buscarAtendimentosPagamentoButton" type="button" class="secondary-button">Buscar</button>
+          </div>
+          <p id="atendimentoSelecionadoResumo" class="selected-record">Nenhum atendimento selecionado.</p>
+          <div class="table-wrap"><table class="data-table pagamento-atendimentos-table"><thead><tr><th>Data</th><th>Paciente</th><th>Dentista</th><th>Status</th><th>Valor</th><th>Acoes</th></tr></thead><tbody id="pagamentoAtendimentosTabela"><tr><td colspan="6">Busque um atendimento para registrar pagamento.</td></tr></tbody></table></div>
+        </div>
         <label for="receitaDescricao">Descricao</label><input id="receitaDescricao" name="descricao" type="text" value="Pagamento de atendimento" />
         <div class="form-grid-2"><div><label for="receitaValor">Valor</label><input id="receitaValor" name="valor" type="number" min="0.01" step="0.01" required /></div><div><label for="receitaFormaPagamento">Forma</label><select id="receitaFormaPagamento" name="formaPagamento" required><option value="PIX">PIX</option><option value="DINHEIRO">Dinheiro</option><option value="CARTAO_CREDITO">Cartao credito</option><option value="CARTAO_DEBITO">Cartao debito</option><option value="CONVENIO">Convenio</option></select></div></div>
         <div class="form-grid-2"><div><label for="receitaStatus">Status</label><select id="receitaStatus" name="status"><option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option></select></div><div><label for="receitaDataPagamento">Pagamento</label><input id="receitaDataPagamento" name="dataPagamento" type="date" /></div></div>

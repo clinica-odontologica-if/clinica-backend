@@ -70,13 +70,18 @@ public class AtendimentoService {
             Long pacienteId,
             Long profissionalId,
             LocalDate data,
+            LocalDate dataInicio,
+            LocalDate dataFim,
             StatusAtendimento status,
+            String busca,
             Authentication authentication,
             String authorizationHeader
     ) {
         Long profissionalFiltro = resolverFiltroProfissional(profissionalId, authentication, authorizationHeader);
 
-        return atendimentoRepository.buscarAtivosComFiltros(pacienteId, profissionalFiltro, data, status)
+        validarPeriodo(dataInicio, dataFim);
+
+        return atendimentoRepository.buscarAtivosComFiltros(pacienteId, profissionalFiltro, data, dataInicio, dataFim, status, normalizarTextoOpcional(busca))
                 .stream()
                 .map(AtendimentoResponse::from)
                 .toList();
@@ -136,6 +141,20 @@ public class AtendimentoService {
 
         atendimento.setStatus(StatusAtendimento.CANCELADO);
         return AtendimentoResponse.from(atendimentoRepository.save(atendimento));
+    }
+
+    private void validarPeriodo(LocalDate dataInicio, LocalDate dataFim) {
+        if (dataInicio != null && dataFim != null && dataInicio.isAfter(dataFim)) {
+            throw new RegraDeNegocioException("Data inicial nao pode ser posterior a data final");
+        }
+    }
+
+    private String normalizarTextoOpcional(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        String texto = valor.trim();
+        return texto.isEmpty() ? null : texto;
     }
 
     private Atendimento buscarAtendimentoAtivo(Long id) {
